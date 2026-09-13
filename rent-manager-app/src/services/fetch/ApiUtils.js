@@ -13,14 +13,21 @@ const request = (options) => {
     options = Object.assign({}, defaults, options);
 
     return fetch(options.url, options)
-    .then(response => 
-        response.json().then(json => {
-            if(!response.ok) {
-                return Promise.reject(json);
-            }
-            return json;
-        })
-    );
+    .then(response => {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return response.json().then(json => {
+                if(!response.ok) {
+                    return Promise.reject(json);
+                }
+                return json;
+            });
+        }
+        if (!response.ok) {
+            return Promise.reject({ message: response.statusText || 'Request failed' });
+        }
+        return response.text();
+    });
 };
 
 export function getCurrentUser() {
