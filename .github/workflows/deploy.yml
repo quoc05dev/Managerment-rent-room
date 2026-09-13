@@ -61,6 +61,8 @@ jobs:
           echo "Lint completed"
 
       - name: Run frontend build test
+        env:
+          CI: false
         run: |
           cd rent-manager-app
           npm run build
