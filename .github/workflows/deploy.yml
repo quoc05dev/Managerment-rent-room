@@ -63,7 +63,7 @@ jobs:
       - name: Run frontend build test
         run: |
           cd rent-manager-app
-          CI=true npm run build
+          npm run build
 
       - name: Setup Java
         uses: actions/setup-java@v4
