@@ -12,7 +12,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to server via SSH
+      - name: Stop old containers and clean up
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -20,8 +20,66 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             cd ~/Quoc/Managerment-rent-room
+            echo "=== Stopping old containers ==="
+            docker compose down --remove-orphans
+            echo "=== Pruning old images ==="
+            docker image prune -af
+            echo "=== Pruning build cache ==="
+            docker builder prune -af --filter "until=24h"
+            echo "=== Cleanup done ==="
+
+      - name: Pull and rebuild
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd ~/Quoc/Managerment-rent-room
+            echo "=== Pulling latest code ==="
             git pull origin main
-            docker compose down
+            echo "=== Building and starting containers ==="
             docker compose up -d --build
-            docker image prune -f
-            echo "Deploy completed at $(date)"
+
+      - name: Verify containers are running
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd ~/Quoc/Managerment-rent-room
+            echo "=== Container Status ==="
+            docker compose ps
+            echo ""
+            echo "=== Checking backend health ==="
+            for i in $(seq 1 30); do
+              if docker compose exec -T backend curl -sf http://localhost:8080 > /dev/null 2>&1; then
+                echo "Backend is UP"
+                break
+              fi
+              echo "Waiting for backend... ($i/30)"
+              sleep 5
+            done
+            echo ""
+            echo "=== Checking frontend ==="
+            if docker compose exec -T frontend curl -sf http://localhost:80 > /dev/null 2>&1; then
+              echo "Frontend is UP"
+            else
+              echo "Frontend is DOWN"
+              docker compose logs frontend --tail=20
+              exit 1
+            fi
+            echo ""
+            echo "=== All services verified ==="
+            docker compose ps
+
+      - name: Notify deploy result
+        if: always()
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            echo "Deploy finished at $(date)" >> ~/Quoc/deploy.log
