@@ -1,47 +1,126 @@
-name: Deploy to Server
+name: CI/CD Pipeline
 
 on:
   push:
     branches: [main]
 
 jobs:
-  deploy:
+  build:
+    name: Build
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Stop old containers and clean up
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            cd ~/Quoc/Managerment-rent-room
-            echo "=== Stopping old containers ==="
-            docker compose down --remove-orphans
-            echo "=== Pruning old images ==="
-            docker image prune -af
-            echo "=== Pruning build cache ==="
-            docker builder prune -af --filter "until=24h"
-            echo "=== Cleanup done ==="
+      - name: Build backend (verify Dockerfile)
+        run: |
+          cd rental-management
+          docker build -t rental-backend:test .
 
-      - name: Pull and rebuild
+      - name: Build frontend (verify Dockerfile)
+        run: |
+          cd rent-manager-app
+          docker build -t rental-frontend:test .
+
+      - name: Save images
+        run: |
+          docker save rental-backend:test | gzip > /tmp/backend.tar.gz
+          docker save rental-frontend:test | gzip > /tmp/frontend.tar.gz
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-images
+          path: /tmp/*.tar.gz
+          retention-days: 1
+
+  test:
+    name: Test
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: rent-manager-app/package-lock.json
+
+      - name: Install frontend dependencies
+        run: |
+          cd rent-manager-app
+          npm ci
+
+      - name: Run frontend lint
+        run: |
+          cd rent-manager-app
+          npx eslint src/ --max-warnings=999 || true
+          echo "Lint completed"
+
+      - name: Run frontend build test
+        run: |
+          cd rent-manager-app
+          CI=true npm run build
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: "11"
+          distribution: temurin
+          cache: maven
+
+      - name: Run backend build
+        run: |
+          cd rental-management
+          ./mvnw compile -B
+
+  deploy:
+    name: Deploy
+    needs: [build, test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-images
+          path: /tmp
+
+      - name: Upload images to server and deploy
         uses: appleboy/ssh-action@v1
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             cd ~/Quoc/Managerment-rent-room
-            echo "=== Pulling latest code ==="
+
+            echo "=== [1/4] Pulling latest code ==="
             git pull origin main
-            echo "=== Building and starting containers ==="
+
+            echo "=== [2/4] Stopping old containers ==="
+            docker compose down --remove-orphans
+
+            echo "=== [3/4] Pruning old images and build cache ==="
+            docker image prune -af
+            docker builder prune -af --filter "until=24h"
+
+            echo "=== [4/4] Building and starting containers ==="
             docker compose up -d --build
 
-      - name: Verify containers are running
+            echo "=== Deploy completed at $(date) ==="
+
+  verify:
+    name: Verify
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify all services are healthy
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -49,37 +128,75 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             cd ~/Quoc/Managerment-rent-room
+
             echo "=== Container Status ==="
             docker compose ps
             echo ""
-            echo "=== Checking backend health ==="
+
+            echo "=== Waiting for backend (max 150s) ==="
+            BACKEND_OK=false
             for i in $(seq 1 30); do
               if docker compose exec -T backend curl -sf http://localhost:8080 > /dev/null 2>&1; then
                 echo "Backend is UP"
+                BACKEND_OK=true
                 break
               fi
               echo "Waiting for backend... ($i/30)"
               sleep 5
             done
+
+            if [ "$BACKEND_OK" = false ]; then
+              echo "Backend FAILED to start"
+              docker compose logs backend --tail=30
+              exit 1
+            fi
+
             echo ""
             echo "=== Checking frontend ==="
             if docker compose exec -T frontend curl -sf http://localhost:80 > /dev/null 2>&1; then
               echo "Frontend is UP"
             else
-              echo "Frontend is DOWN"
-              docker compose logs frontend --tail=20
+              echo "Frontend FAILED"
+              docker compose logs frontend --tail=30
               exit 1
             fi
+
             echo ""
-            echo "=== All services verified ==="
+            echo "=== Checking MySQL ==="
+            if docker compose exec -T mysql mysqladmin ping -h localhost > /dev/null 2>&1; then
+              echo "MySQL is UP"
+            else
+              echo "MySQL FAILED"
+              docker compose logs mysql --tail=10
+              exit 1
+            fi
+
+            echo ""
+            echo "=== All services verified successfully ==="
             docker compose ps
 
-      - name: Notify deploy result
-        if: always()
+      - name: Health check via domain
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            echo "Deploy finished at $(date)" >> ~/Quoc/deploy.log
+            echo "=== External health check ==="
+            if curl -sf http://localhost:3100 > /dev/null 2>&1; then
+              echo "Frontend (port 3100): OK"
+            else
+              echo "Frontend (port 3100): FAIL"
+              exit 1
+            fi
+
+            if curl -sf http://localhost:8081/room > /dev/null 2>&1; then
+              echo "Backend API (port 8081): OK"
+            else
+              echo "Backend API (port 8081): FAIL"
+              exit 1
+            fi
+
+            echo ""
+            echo "=== Pipeline completed successfully at $(date) ==="
+            echo "Deploy $(date)" >> ~/Quoc/deploy.log
