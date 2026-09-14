@@ -30,7 +30,7 @@ class Home extends Component {
         //console.log(pageNo)
         getAllRoomOfCustomer(1, 3, '', '','').then(response => {
             this.setState({
-                rooms: response.content
+                rooms: (response && response.content) || []
             });
         }).catch(
             error => {
@@ -41,7 +41,7 @@ class Home extends Component {
 
         getAllAccountRentalerForCustomer(1, 7).then(response => {
             this.setState({
-                rentaler: response.content
+                rentaler: (response && response.content) || []
             });
         }).catch(
             error => {
@@ -147,7 +147,7 @@ class Home extends Component {
                         </div>
                         <section className="property-grid grid">
                             <div className="d-flex flex-wrap">
-                                {rooms.map(room => (
+                                {(rooms || []).map(room => (
                                     <div className="col-md-4">
                                         <div className="card-box-a card-shadow">
                                             <div className="img-box-a">
@@ -236,8 +236,8 @@ class Home extends Component {
                             </div>
                         </div>
                         <div className="row">
-                            {rentaler.map(rentaler => {
-                                if (rentaler.roles[0] && rentaler.roles[0].name === "ROLE_RENTALER") {
+                            {(rentaler || []).map(rentaler => {
+                                if (rentaler.roles && rentaler.roles[0] && rentaler.roles[0].name === "ROLE_RENTALER") {
                                     return (
                                         <div className="col-md-4">
                                             <div className="card-box-d">
