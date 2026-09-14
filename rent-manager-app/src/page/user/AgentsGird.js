@@ -19,8 +19,8 @@ const AgentsGird = (props) => {
 
     const fetchData = () => {
         getAllAccountRentalerForCustomer(currentPage, itemsPerPage).then(response => {
-            settableData(response.content);
-            setTotalItems(response.totalElements);
+            settableData((response && response.content) || []);
+            setTotalItems((response && response.totalElements) || 0);
         }).catch(
             error => {
                 toast.error((error && error.message) || 'Oops! Có điều gì đó xảy ra. Vui lòng thử lại!');
