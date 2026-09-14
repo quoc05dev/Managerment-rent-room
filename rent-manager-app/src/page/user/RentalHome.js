@@ -22,8 +22,8 @@ const RentalHome = (props) => {
 
     const fetchData = () => {
         getAllRoomOfCustomer(currentPage, itemsPerPage, searchQuery, price, cateId).then(response => {
-            setRooms(response.content);
-            setTotalItems(response.totalElements);
+            setRooms((response && response.content) || []);
+            setTotalItems((response && response.totalElements) || 0);
         }).catch(
             error => {
                 toast.error((error && error.message) || 'Oops! Có điều gì đó xảy ra. Vui lòng thử lại!');
@@ -113,12 +113,12 @@ const RentalHome = (props) => {
                             </div>
                         </div>
                         <div className="row">
-                            {rooms.map(room => (
+                            {(rooms || []).map(room => (
 
                                 <div className="col-md-4">
                                     <div className="card-box-a card-shadow">
                                         <div className="img-box-a">
-                                            {room.roomMedia[0] ?
+                                            {room.roomMedia && room.roomMedia[0] ?
                                                 <img src={room.roomMedia[0].files} alt="" className="img-a img-fluid" style={{ width: "350px", height: "450px" }} />
                                                 :
                                                 <img src="assets/img/property-1.jpg" alt="" className="img-a img-fluid" style={{ width: "350px", height: "450px" }} />
