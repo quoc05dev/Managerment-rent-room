@@ -94,7 +94,11 @@ public class AuthServiceImpl extends BaseService implements AuthService {
         user.setIsLocked(false);
         user.setIsConfirmed(false);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        sendEmailConfirmed(signUpRequest.getEmail(),signUpRequest.getName());
+        try {
+            sendEmailConfirmed(signUpRequest.getEmail(),signUpRequest.getName());
+        } catch (Exception e) {
+            System.out.println("Failed to send confirmation email: " + e.getMessage());
+        }
 
         if (RoleName.ROLE_USER.equals(signUpRequest.getRole())) {
             Role userRole = roleRepository.findByName(RoleName.ROLE_USER)
