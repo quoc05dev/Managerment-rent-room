@@ -68,13 +68,13 @@ function App() {
   const loadCurrentlyLoggedInUser = () => {
     getCurrentUser()
       .then(response => {
-        setCurrentUser(response);
-        setUsername(response.name);
-        setRole(response.roles[0].name);
-        setAuthenticated(true);
+        if (response && response.roles) {
+          setCurrentUser(response);
+          setUsername(response.name);
+          setRole(response.roles[0].name);
+          setAuthenticated(true);
+        }
         setLoading(false);
-        console.log(response)
-        console.log({ authenticated, username, currentUser, role, loading });
       }).catch(error => {
         setLoading(false);
       });
@@ -83,12 +83,13 @@ function App() {
   const loadCurrentlyLoggedInRetanler = () => {
     getCurrentRentaler()
       .then(response => {
-        setCurrentUser(response);
-        setUsername(response.name);
-        setRole(response.roles[0].name);
-        setAuthenticated(true);
+        if (response && response.roles) {
+          setCurrentUser(response);
+          setUsername(response.name);
+          setRole(response.roles[0].name);
+          setAuthenticated(true);
+        }
         setLoading(false);
-        console.log({ authenticated, username, currentUser, role, loading });
       }).catch(error => {
         setLoading(false);
       });
@@ -97,12 +98,13 @@ function App() {
   const loadCurrentlyLoggedInAdmin = () => {
     getCurrentAdmin()
       .then(response => {
-        setCurrentUser(response);
-        setUsername(response.name);
-        setRole(response.roles[0].name);
-        setAuthenticated(true);
+        if (response && response.roles) {
+          setCurrentUser(response);
+          setUsername(response.name);
+          setRole(response.roles[0].name);
+          setAuthenticated(true);
+        }
         setLoading(false);
-        console.log({ authenticated, username, currentUser, role, loading });
       }).catch(error => {
         setLoading(false);
       });
@@ -122,9 +124,13 @@ function App() {
   }
 
   useEffect(() => {
-    loadCurrentlyLoggedInUser();
-    loadCurrentlyLoggedInRetanler();
-    loadCurrentlyLoggedInAdmin();
+    if (localStorage.getItem(ACCESS_TOKEN)) {
+      loadCurrentlyLoggedInUser();
+      loadCurrentlyLoggedInRetanler();
+      loadCurrentlyLoggedInAdmin();
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   if (loading) {
