@@ -23,7 +23,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.util.ResourceUtils;
+import org.springframework.core.io.ClassPathResource;
+
+import java.io.InputStream;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -248,15 +250,17 @@ public class AuthServiceImpl extends BaseService implements AuthService {
     }
 
     public static String readFile(String filename) throws IOException {
-        File file = ResourceUtils.getFile("classpath:forgot-password.html");
-        byte[] encoded = Files.readAllBytes(file.toPath());
-        return new String(encoded, StandardCharsets.UTF_8);
+        ClassPathResource resource = new ClassPathResource("forgot-password.html");
+        try (InputStream is = resource.getInputStream()) {
+            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        }
     }
 
     public static String readFileConfirmed(String filename) throws IOException {
-        File file = ResourceUtils.getFile("classpath:confirm-email.html");
-        byte[] encoded = Files.readAllBytes(file.toPath());
-        return new String(encoded, StandardCharsets.UTF_8);
+        ClassPathResource resource = new ClassPathResource("confirm-email.html");
+        try (InputStream is = resource.getInputStream()) {
+            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        }
     }
 }
 
