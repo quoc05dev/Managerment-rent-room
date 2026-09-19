@@ -50,7 +50,7 @@ function Login(props) {
                                         <h3>Đăng nhập <a href="/" style={{ textDecoration: 'none' }}>Estate<span className="color-b">Agency</span></a></h3>
                                         <p className="mb-4">Nếu bạn chưa có tài khoản. <a href="/signup">Đăng ký tài khoản mới</a></p>
                                     </div>
-                                    <LoginForm />
+                                    <LoginForm onLoginSuccess={props.onLoginSuccess} />
 
                                     <span className="d-block text-left my-4 text-muted"> hoặc đăng nhập với</span>
 
@@ -86,7 +86,7 @@ function SocialLogin() {
 
 
 
-function LoginForm() {
+function LoginForm(props) {
     const history = useNavigate();
     const [formState, setFormState] = useState({
         email: '',
@@ -134,8 +134,8 @@ function LoginForm() {
                 <span>Mật khẩu</span>
                 <input type="password" className="form-control" name="password" value={formState.password} onChange={handleInputChange} required />
             </div>
-            <div class="d-flex mb-5 align-items-center">
-                <span class="ml-auto"><a href="/forgot-password" class="forgot-pass">Quên mật khẩu</a></span>
+            <div className="d-flex mb-5 align-items-center">
+                <span className="ml-auto"><a href="/forgot-password" className="forgot-pass">Quên mật khẩu</a></span>
             </div>
             <input type="submit" value="Đăng nhập" className="btn text-white btn-block btn-primary" />
         </form>

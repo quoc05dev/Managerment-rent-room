@@ -113,8 +113,8 @@ function LoginForm(props) {
                 <span>Mật khẩu</span>
                 <input type="password" className="form-control" name="password" value={formState.password} onChange={handleInputChange} required />
             </div>
-            <div class="d-flex mb-5 align-items-center">
-                <span class="ml-auto"><a href="/forgot-password" class="forgot-pass">Quên mật khẩu</a></span>
+            <div className="d-flex mb-5 align-items-center">
+                <span className="ml-auto"><a href="/forgot-password" className="forgot-pass">Quên mật khẩu</a></span>
             </div>
             <input type="submit" value="Đăng nhập" className="btn text-white btn-block btn-primary" />
         </form>
