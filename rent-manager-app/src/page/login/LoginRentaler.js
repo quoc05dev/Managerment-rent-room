@@ -50,7 +50,7 @@ function LoginRentaler(props) {
                                         <h3>Đăng nhập <a href="/" style={{ textDecoration: 'none' }}>Estate<span className="color-b">Agency</span></a></h3>
                                         <p className="mb-4">Nếu bạn chưa có tài khoản. <a href="/signup-rentaler">Đăng ký tài khoản mới</a></p>
                                     </div>
-                                    <LoginForm />
+                                    <LoginForm onLoginSuccess={props.onLoginSuccess} />
                                 </div>
                             </div>
 
@@ -65,7 +65,7 @@ function LoginRentaler(props) {
 
 
 
-function LoginForm() {
+function LoginForm(props) {
     const history = useNavigate();
     const [formState, setFormState] = useState({
         email: '',
@@ -92,7 +92,11 @@ function LoginForm() {
             .then(response => {
                 localStorage.setItem(ACCESS_TOKEN, response.accessToken);
                 toast.success("Bạn đã đăng nhập thành công!!");
-                window.location.href = "/rentaler";
+                if (props.onLoginSuccess) {
+                    props.onLoginSuccess();
+                } else {
+                    window.location.href = "/rentaler";
+                }
             }).catch(error => {
                 toast.error((error && error.message) || 'Oops! Có điều gì đó xảy ra. Vui lòng thử lại!');
             });

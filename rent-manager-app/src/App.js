@@ -129,6 +129,26 @@ function App() {
     setCurrentUser(null);
   }
 
+  const handleLoginSuccess = () => {
+    setLoading(true);
+    if (localStorage.getItem(ACCESS_TOKEN)) {
+      const loadUser = async () => {
+        const userOk = await loadCurrentlyLoggedInUser();
+        if (userOk) return;
+        const rentalerOk = await loadCurrentlyLoggedInRetanler();
+        if (rentalerOk) return;
+        const adminOk = await loadCurrentlyLoggedInAdmin();
+        if (!adminOk) {
+          localStorage.removeItem(ACCESS_TOKEN);
+          setLoading(false);
+        }
+      };
+      loadUser();
+    } else {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
     if (localStorage.getItem(ACCESS_TOKEN)) {
       const loadUser = async () => {
@@ -175,9 +195,9 @@ function App() {
           <Route exact path="/success-comfirmed/:email" element={<SuccessConfirmed />} />
           <Route exact path="/profile" element={<Profile authenticated={authenticated} loadCurrentUser={loadCurrentlyLoggedInUser} currentUser={currentUser} onLogout={handleLogout} />} />
           <Route exact path="/change-password" element={<ChangePasswordOfUser authenticated={authenticated} currentUser={currentUser} onLogout={handleLogout} />} />
-          <Route exact path="/login" element={<Login authenticated={authenticated} />} />
-          <Route exact path="/login-rentaler" element={<LoginRentaler authenticated={authenticated} currentUser={currentUser} role={role} />} />
-          <Route exact path="/login-admin" element={<LoginAdmin authenticated={authenticated} currentUser={currentUser} role={role} />} />
+          <Route exact path="/login" element={<Login authenticated={authenticated} onLoginSuccess={handleLoginSuccess} />} />
+          <Route exact path="/login-rentaler" element={<LoginRentaler authenticated={authenticated} currentUser={currentUser} role={role} onLoginSuccess={handleLoginSuccess} />} />
+          <Route exact path="/login-admin" element={<LoginAdmin authenticated={authenticated} currentUser={currentUser} role={role} onLoginSuccess={handleLoginSuccess} />} />
           <Route exact path="/signup" element={<Signup authenticated={authenticated} currentUser={currentUser} role={role} />} />
           <Route exact path="/signup-rentaler" element={<SignupRentaler authenticated={authenticated} />} />
           {/* ADMIN */}
