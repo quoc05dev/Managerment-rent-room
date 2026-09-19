@@ -66,7 +66,7 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   const loadCurrentlyLoggedInUser = () => {
-    getCurrentUser()
+    return getCurrentUser()
       .then(response => {
         if (response && response.roles) {
           setCurrentUser(response);
@@ -75,13 +75,14 @@ function App() {
           setAuthenticated(true);
         }
         setLoading(false);
+        return true;
       }).catch(error => {
-        setLoading(false);
+        return false;
       });
   }
 
   const loadCurrentlyLoggedInRetanler = () => {
-    getCurrentRentaler()
+    return getCurrentRentaler()
       .then(response => {
         if (response && response.roles) {
           setCurrentUser(response);
@@ -90,13 +91,14 @@ function App() {
           setAuthenticated(true);
         }
         setLoading(false);
+        return true;
       }).catch(error => {
-        setLoading(false);
+        return false;
       });
   }
 
   const loadCurrentlyLoggedInAdmin = () => {
-    getCurrentAdmin()
+    return getCurrentAdmin()
       .then(response => {
         if (response && response.roles) {
           setCurrentUser(response);
@@ -105,8 +107,9 @@ function App() {
           setAuthenticated(true);
         }
         setLoading(false);
+        return true;
       }).catch(error => {
-        setLoading(false);
+        return false;
       });
   }
 
@@ -125,9 +128,18 @@ function App() {
 
   useEffect(() => {
     if (localStorage.getItem(ACCESS_TOKEN)) {
-      loadCurrentlyLoggedInUser();
-      loadCurrentlyLoggedInRetanler();
-      loadCurrentlyLoggedInAdmin();
+      const loadUser = async () => {
+        const userOk = await loadCurrentlyLoggedInUser();
+        if (userOk) return;
+        const rentalerOk = await loadCurrentlyLoggedInRetanler();
+        if (rentalerOk) return;
+        const adminOk = await loadCurrentlyLoggedInAdmin();
+        if (!adminOk) {
+          localStorage.removeItem(ACCESS_TOKEN);
+          setLoading(false);
+        }
+      };
+      loadUser();
     } else {
       setLoading(false);
     }

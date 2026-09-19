@@ -93,10 +93,7 @@ function LoginForm() {
             .then(response => {
                 localStorage.setItem(ACCESS_TOKEN, response.accessToken);
                 toast.success("Bạn đã đăng nhập thành công!!");
-                history("/admin");
-                setTimeout(() => {
-                    window.location.reload();
-                }, 2000);
+                window.location.href = "/admin";
             }).catch(error => {
                 toast.error((error && error.message) || 'Oops! Có điều gì đó xảy ra. Vui lòng thử lại!');
             });

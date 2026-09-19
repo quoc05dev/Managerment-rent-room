@@ -6,6 +6,7 @@ spring:
   sql:
     init:
       mode: always
+      platform: mysql
 
   jpa:
     generate-ddl: true

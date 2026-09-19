@@ -92,10 +92,7 @@ function LoginForm() {
             .then(response => {
                 localStorage.setItem(ACCESS_TOKEN, response.accessToken);
                 toast.success("Bạn đã đăng nhập thành công!!");
-                history("/rentaler");
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
+                window.location.href = "/rentaler";
             }).catch(error => {
                 toast.error((error && error.message) || 'Oops! Có điều gì đó xảy ra. Vui lòng thử lại!');
             });
