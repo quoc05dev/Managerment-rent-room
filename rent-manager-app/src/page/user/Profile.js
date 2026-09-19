@@ -85,21 +85,25 @@ const UserProfile = (props) => {
                     <div className="main">
 
                         <main style={{ margin: "20px 20px 20px 20px" }}>
-                            <div className="profile-info">
-                                <div className="profile-avatar">
-                                    {
-                                        currentUser && currentUser.imageUrl ? (
-                                            <img src={currentUser.imageUrl} alt={currentUser.name} style={{ width: "150px" }} />
-                                        ) : (
-                                            <div className="text-avatar" style={{ width: "150px" }}>
-                                                <span style={{ width: "150px" }}>{currentUser && currentUser.name && currentUser.name[0]}</span>
-                                            </div>
-                                        )
-                                    }
-                                </div>
-                                <div className="profile-name">
-                                    <h2>{currentUser && currentUser.name}</h2>
-                                    <p className="profile-email">{currentUser && currentUser.email}</p>
+                            <div className="card mb-4">
+                                <div className="card-body">
+                                    <div className="profile-info">
+                                        <div className="profile-avatar">
+                                            {
+                                                currentUser && currentUser.imageUrl ? (
+                                                    <img src={currentUser.imageUrl} alt={currentUser.name} style={{ width: "150px" }} />
+                                                ) : (
+                                                    <div className="text-avatar" style={{ width: "150px" }}>
+                                                        <span style={{ width: "150px" }}>{currentUser && currentUser.name && currentUser.name[0]}</span>
+                                                    </div>
+                                                )
+                                            }
+                                        </div>
+                                        <div className="profile-name">
+                                            <h2>{currentUser && currentUser.name}</h2>
+                                            <p className="profile-email">{currentUser && currentUser.email}</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 

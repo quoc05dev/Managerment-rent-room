@@ -46,20 +46,20 @@ class Header extends Component {
                         </div>
                         {!this.props.authenticated ? (
                             <>
-                                <button type="button" className="btn btn-outline-success">
-                                    <Link to="/login" activeClassName="active" style={{ textDecoration: 'none', color: 'green' }}>
+                                <button type="button" className="btn btn-outline-success" style={{ borderRadius: "20px" }}>
+                                    <Link to="/login" style={{ textDecoration: 'none', color: 'inherit' }}>
                                         Đăng nhập
                                     </Link>
                                 </button>
                                 &nbsp;&nbsp;
-                                <button type="button" className="btn btn-outline-success">
-                                    <Link to="/signup" activeClassName="active" style={{ textDecoration: 'none', color: 'green' }}>
+                                <button type="button" className="btn btn-outline-success" style={{ borderRadius: "20px" }}>
+                                    <Link to="/signup" style={{ textDecoration: 'none', color: 'inherit' }}>
                                         Đăng kí
                                     </Link>
                                 </button>
                                 &nbsp;&nbsp;
-                                <button type="button" className="btn btn-success">
-                                    <Link to="/login-rentaler" activeClassName="active" style={{ textDecoration: 'none', color: 'white' }}>
+                                <button type="button" className="btn btn-success" style={{ borderRadius: "20px" }}>
+                                    <Link to="/login-rentaler" style={{ textDecoration: 'none', color: 'white' }}>
                                         Đăng tin
                                     </Link>
                                 </button>
@@ -105,11 +105,11 @@ class Header extends Component {
                                         </div>
                                         <div>
                                             <Link to="/profile">
-                                                <button type="button" className="btn btn-outline-dark btn-rounded btn-sm"
-                                                    data-mdb-ripple-color="dark">Hồ Sơ</button>&nbsp;
+                                                <button type="button" className="btn btn-outline-success btn-sm"
+                                                    style={{ borderRadius: "20px", marginRight: "8px" }}>Hồ Sơ</button>
                                             </Link>
-                                            <button type="button" className="btn btn-outline-dark btn-rounded btn-sm"
-                                                data-mdb-ripple-color="dark" onClick={this.props.onLogout}>Đăng xuất</button>
+                                            <button type="button" className="btn btn-outline-success btn-sm"
+                                                style={{ borderRadius: "20px" }} onClick={this.props.onLogout}>Đăng xuất</button>
                                         </div>
                                     </div>
                                     
