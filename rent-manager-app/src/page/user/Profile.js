@@ -5,6 +5,7 @@ import Header from "../../common/Header";
 import { Navigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import AuthService from "../../services/axios/AuthService";
+import "../../assets/css/Profile.css";
 
 
 const UserProfile = (props) => {
@@ -21,17 +22,14 @@ const UserProfile = (props) => {
     const onFileChange = (event) => {
         const file = event.target.files[0];
         if (file) {
-            // Perform file validation
             const allowedTypes = ["image/jpeg", "image/png"];
-            const maxFileSize = 1 * 1024 * 1024; // 1MB
+            const maxFileSize = 1 * 1024 * 1024;
 
-            // Check file type
             if (!allowedTypes.includes(file.type)) {
                 toast.error("Only JPEG and PNG images are allowed.");
                 return;
             }
 
-            // Check file size
             if (file.size > maxFileSize) {
                 toast.error("File size exceeds the maximum limit of 1MB.");
                 return;
@@ -49,7 +47,6 @@ const UserProfile = (props) => {
         formData.append('address', address);
 
         event.preventDefault();
-        // Handle form submission
 
         AuthService.uploadProfile(formData).then(response => {
             toast.success(response.message);
@@ -106,35 +103,35 @@ const UserProfile = (props) => {
                                 </div>
                             </div>
 
-                            <div class="card">
-                                <div class="card-body">
+                            <div className="card">
+                                <div className="card-body">
                                     <form onSubmit={handleSubmit}>
-                                        <div class="row">
-                                            <div class="mb-3 col-md-6">
-                                                <label class="form-label">Email</label>
+                                        <div className="row">
+                                            <div className="mb-3 col-md-6">
+                                                <label className="form-label">Email</label>
                                                 <input type="email" className="form-control" name='email' value={currentUser && currentUser.email} id="inputEmail4" placeholder="Email" disabled />
                                             </div>
-                                            <div class="mb-3 col-md-6">
-                                                <label class="form-label" >Số điện thoại</label>
+                                            <div className="mb-3 col-md-6">
+                                                <label className="form-label" >Số điện thoại</label>
                                                 <input type="text" className="form-control" name='phone' value={currentUser && currentUser.phone} id="inputPassword4" placeholder="Số điện thoại" disabled />
                                             </div>
                                         </div>
-                                        <div class="mb-3">
-                                            <label class="form-label" for="inputAddress">Họ và Tên</label>
+                                        <div className="mb-3">
+                                            <label className="form-label" htmlFor="inputAddress">Họ và Tên</label>
                                             <input type="text" className="form-control" name='name' value={currentUser && currentUser.name} id="inputAddress" placeholder="Peter Parker" disabled />
                                         </div>
-                                        <div class="mb-3">
-                                            <label class="form-label" for="inputAddress">Địa chỉ</label>
+                                        <div className="mb-3">
+                                            <label className="form-label" htmlFor="inputAddress">Địa chỉ</label>
                                             <input type="text" className="form-control" name='address'
                                                 value={address}
                                                 onChange={handleAddressChange}
                                                 id="inputAddress" placeholder="Peter Parker" />
                                         </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Tải Hình Ảnh</label>
-                                            <input class="form-control" accept=".png, .jpeg" type="file" onChange={onFileChange} />
+                                        <div className="mb-3">
+                                            <label className="form-label">Tải Hình Ảnh</label>
+                                            <input className="form-control" accept=".png, .jpeg" type="file" onChange={onFileChange} />
                                         </div>
-                                        <button type="submit" class="btn btn-primary">Submit</button>
+                                        <button type="submit" className="btn btn-profile-submit">Cập nhật</button>
                                     </form>
                                 </div>
                             </div>

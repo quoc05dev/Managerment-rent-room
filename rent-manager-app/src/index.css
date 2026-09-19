@@ -11,3 +11,37 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Sidebar theme - match green accent #2eca6a */
+#sidebar {
+  background-color: #1a2e3b !important;
+}
+
+#sidebar .sidebar-content {
+  background-color: #1a2e3b !important;
+}
+
+#sidebar .sidebar-link {
+  color: #b8c5d0 !important;
+  border-left: 3px solid transparent;
+}
+
+#sidebar .sidebar-link:hover {
+  color: #ffffff !important;
+  background-color: rgba(46, 202, 106, 0.1) !important;
+  border-left-color: #2eca6a;
+}
+
+#sidebar .sidebar-link.active {
+  color: #ffffff !important;
+  background-color: rgba(46, 202, 106, 0.15) !important;
+  border-left-color: #2eca6a;
+}
+
+#sidebar .sidebar-header {
+  color: #7a8fa3 !important;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+  padding: 15px 20px 8px;
+}
