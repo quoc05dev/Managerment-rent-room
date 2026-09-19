@@ -18,12 +18,14 @@ const request = (options) => {
         if (contentType && contentType.includes('application/json')) {
             return response.json().then(json => {
                 if(!response.ok) {
+                    console.error(`API Error [${options.method || 'GET'} ${options.url}]:`, response.status, json);
                     return Promise.reject(json);
                 }
                 return json;
             });
         }
         if (!response.ok) {
+            console.error(`API Error [${options.method || 'GET'} ${options.url}]:`, response.status, response.statusText);
             return Promise.reject({ message: response.statusText || 'Request failed' });
         }
         return response.text();

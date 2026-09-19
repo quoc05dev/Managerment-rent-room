@@ -30,17 +30,26 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         try {
             String jwt = getJwtFromRequest(request);
-            if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
-                Long userId = tokenProvider.getUserIdFromToken(jwt);
-
-                UserDetails userDetails = customUserDetailsService.loadUserById(userId);
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+            if (StringUtils.hasText(jwt)) {
+                logger.info("[JWT] Token found, length=" + jwt.length() + ", startsWith=" + jwt.substring(0, Math.min(20, jwt.length())));
+                if (tokenProvider.validateToken(jwt)) {
+                    logger.info("[JWT] Token VALIDATED OK");
+                    Long userId = tokenProvider.getUserIdFromToken(jwt);
+                    logger.info("[JWT] userId from token: " + userId);
+                    UserDetails userDetails = customUserDetailsService.loadUserById(userId);
+                    logger.info("[JWT] User loaded: " + userDetails.getUsername() + ", authorities: " + userDetails.getAuthorities());
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    logger.info("[JWT] Authentication SET in context");
+                } else {
+                    logger.error("[JWT] Token VALIDATION FAILED for token length=" + jwt.length());
+                }
+            } else {
+                logger.debug("[JWT] No token found in request " + request.getRequestURI());
             }
         } catch (Exception ex) {
-            logger.error("Could not set user authentication in security context", ex);
+            logger.error("[JWT] Could not set user authentication in security context for URI: " + request.getRequestURI(), ex);
         }
 
         filterChain.doFilter(request, response);

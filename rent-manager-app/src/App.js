@@ -77,6 +77,7 @@ function App() {
         setLoading(false);
         return true;
       }).catch(error => {
+        console.error("[Auth] getCurrentUser failed:", error);
         return false;
       });
   }
@@ -93,6 +94,7 @@ function App() {
         setLoading(false);
         return true;
       }).catch(error => {
+        console.error("[Auth] getCurrentRentaler failed:", error);
         return false;
       });
   }
@@ -109,6 +111,7 @@ function App() {
         setLoading(false);
         return true;
       }).catch(error => {
+        console.error("[Auth] getCurrentAdmin failed:", error);
         return false;
       });
   }
