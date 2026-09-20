@@ -51,12 +51,16 @@
   <script src="assets/js/app.js" defer></script>
   <script>
     window.addEventListener("load", function () {
-      var kommunicateSettings =
-        { "appId": "1923fe465772b674c05031428cc014d28", "popupWidget": true, "automaticChatOpenOnNavigation": true };
-      var s = document.createElement("script"); s.type = "text/javascript"; s.async = true;
-      s.src = "https://widget.kommunicate.io/v2/kommunicate.app";
-      var h = document.getElementsByTagName("head")[0]; h.appendChild(s);
-      window.kommunicate = kommunicateSettings; kommunicate._globals = kommunicateSettings;
+      try {
+        var kommunicateSettings = { "appId": "1923fe465772b674c05031428cc014d28", "popupWidget": true, "automaticChatOpenOnNavigation": true };
+        var s = document.createElement("script"); s.type = "text/javascript"; s.async = true;
+        s.src = "https://widget.kommunicate.io/v2/kommunicate.app";
+        var h = document.getElementsByTagName("head")[0]; h.appendChild(s);
+        window.kommunicate = window.kommunicate || {};
+        window.kommunicate._globals = kommunicateSettings;
+      } catch (e) {
+        console.warn("Kommunicate chat widget init error:", e);
+      }
     });
   </script>
 </body>

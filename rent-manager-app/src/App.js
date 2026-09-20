@@ -65,13 +65,23 @@ function App() {
   const [role, setRole] = useState('');
   const [loading, setLoading] = useState(true);
 
+  const extractUserRole = (user) => {
+    if (!user || !user.roles || !user.roles.length) return '';
+    const firstRole = user.roles[0];
+    if (typeof firstRole === 'string') return firstRole.trim();
+    if (firstRole && typeof firstRole.name === 'string') return firstRole.name.trim();
+    if (firstRole && firstRole.name && typeof firstRole.name.name === 'string') return firstRole.name.name.trim();
+    return '';
+  };
+
   const loadCurrentlyLoggedInUser = () => {
     return getCurrentUser()
       .then(response => {
         if (response && response.roles) {
+          const userRole = extractUserRole(response) || 'ROLE_USER';
           setCurrentUser(response);
           setUsername(response.name);
-          setRole(response.roles[0].name);
+          setRole(userRole);
           setAuthenticated(true);
         }
         setLoading(false);
@@ -86,9 +96,10 @@ function App() {
     return getCurrentRentaler()
       .then(response => {
         if (response && response.roles) {
+          const userRole = extractUserRole(response) || 'ROLE_RENTALER';
           setCurrentUser(response);
           setUsername(response.name);
-          setRole(response.roles[0].name);
+          setRole(userRole);
           setAuthenticated(true);
         }
         setLoading(false);
@@ -103,9 +114,10 @@ function App() {
     return getCurrentAdmin()
       .then(response => {
         if (response && response.roles) {
+          const userRole = extractUserRole(response) || 'ROLE_ADMIN';
           setCurrentUser(response);
           setUsername(response.name);
-          setRole(response.roles[0].name);
+          setRole(userRole);
           setAuthenticated(true);
         }
         setLoading(false);

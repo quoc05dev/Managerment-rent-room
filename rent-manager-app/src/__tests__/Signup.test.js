@@ -49,7 +49,7 @@ describe('Signup Component', () => {
         );
         const heading = container.querySelector('h3');
         expect(heading).toBeInTheDocument();
-        expect(heading.textContent).toMatch(/Đăng kí/);
+        expect(heading.textContent).toMatch(/Đăng ký/);
     });
 
     test('renders login link', () => {
@@ -67,7 +67,7 @@ describe('Signup Component', () => {
                 <Signup />
             </MemoryRouter>
         );
-        expect(screen.getByDisplayValue(/Đăng kí/)).toBeInTheDocument();
+        expect(screen.getByDisplayValue(/Đăng ký/)).toBeInTheDocument();
     });
 
     test('renders email input with correct type', () => {

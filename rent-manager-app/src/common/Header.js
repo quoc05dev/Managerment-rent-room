@@ -104,18 +104,29 @@ class Header extends Component {
                                             </ul>
                                         </div>
                                         <div>
-                                            {this.props.currentUser && this.props.currentUser.roles && this.props.currentUser.roles[0] && this.props.currentUser.roles[0].name === "ROLE_RENTALER" && (
-                                                <Link to="/rentaler">
-                                                    <button type="button" className="btn btn-success btn-sm"
-                                                        style={{ borderRadius: "20px", marginRight: "8px" }}>Đăng tin / Quản lý</button>
-                                                </Link>
-                                            )}
-                                            {this.props.currentUser && this.props.currentUser.roles && this.props.currentUser.roles[0] && this.props.currentUser.roles[0].name === "ROLE_ADMIN" && (
-                                                <Link to="/admin">
-                                                    <button type="button" className="btn btn-primary btn-sm"
-                                                        style={{ borderRadius: "20px", marginRight: "8px" }}>Trang Quản trị</button>
-                                                </Link>
-                                            )}
+                                            {(() => {
+                                                const uRole = (this.props.currentUser && this.props.currentUser.roles && (
+                                                    typeof this.props.currentUser.roles[0] === 'string'
+                                                        ? this.props.currentUser.roles[0]
+                                                        : (this.props.currentUser.roles[0]?.name?.trim() || this.props.currentUser.roles[0]?.name)
+                                                )) || this.props.role;
+                                                return (
+                                                    <>
+                                                        {uRole === "ROLE_RENTALER" && (
+                                                            <Link to="/rentaler">
+                                                                <button type="button" className="btn btn-success btn-sm"
+                                                                    style={{ borderRadius: "20px", marginRight: "8px" }}>🏠 Đăng tin / Quản lý</button>
+                                                            </Link>
+                                                        )}
+                                                        {uRole === "ROLE_ADMIN" && (
+                                                            <Link to="/admin">
+                                                                <button type="button" className="btn btn-primary btn-sm"
+                                                                    style={{ borderRadius: "20px", marginRight: "8px" }}>⚙️ Trang Quản trị</button>
+                                                            </Link>
+                                                        )}
+                                                    </>
+                                                );
+                                            })()}
                                             <Link to="/profile">
                                                 <button type="button" className="btn btn-outline-success btn-sm"
                                                     style={{ borderRadius: "20px", marginRight: "8px" }}>Hồ Sơ</button>

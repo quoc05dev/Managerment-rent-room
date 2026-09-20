@@ -118,7 +118,15 @@ function LoginForm(props) {
                 const errorCode = error && error.errorCode;
                 const message = (error && error.message) || 'Oops! Có điều gì đó xảy ra. Vui lòng thử lại!';
 
-                if (errorCode === 'ACCOUNT_NOT_CONFIRMED') {
+                const isUnconfirmed = errorCode === 'ACCOUNT_NOT_CONFIRMED' || 
+                    (message && (
+                        message.toLowerCase().includes('xác thực') || 
+                        message.toLowerCase().includes('kích hoạt') || 
+                        message.toLowerCase().includes('chưa được') ||
+                        message.toLowerCase().includes('disabled')
+                    ));
+
+                if (isUnconfirmed) {
                     setUnconfirmedEmail(formState.email);
                     setShowResendConfirm(true);
                     toast.warn(message);

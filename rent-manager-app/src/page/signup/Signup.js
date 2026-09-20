@@ -106,7 +106,7 @@ function Signup(props) {
                                         </div>
 
 
-                                        <input type="submit" value="Đăng kí" className="btn text-white btn-block btn-primary" />
+                                        <input type="submit" value="Đăng ký" className="btn text-white btn-block btn-primary" />
 
                                     </form>
                                 </div>
