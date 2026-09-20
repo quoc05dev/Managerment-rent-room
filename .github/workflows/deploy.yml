@@ -121,6 +121,6 @@ jobs:
             ls -la /etc/nginx/sites-enabled/ || echo "sites-enabled not found"
             ls -la /etc/nginx/conf.d/ || echo "conf.d not found"
             cat /etc/nginx/sites-enabled/* 2>/dev/null || echo "no sites-enabled config"
-            sudo nginx -t && sudo nginx -s reload || echo "nginx reload failed"
+            sudo nginx -t && (sudo nginx -s reload || sudo systemctl restart nginx) || (sudo nginx -t && sudo systemctl start nginx)
 
             echo "=== Deploy completed at $(date) ==="
