@@ -45,9 +45,9 @@ public abstract class BaseIntegrationTest {
     @PostConstruct
     void setupTestData() {
         Role userRole = roleRepository.findByName(RoleName.ROLE_USER)
-                .orElseGet(() -> roleRepository.save(new Role(RoleName.ROLE_USER)));
+                .orElseGet(() -> roleRepository.save(new Role(null, RoleName.ROLE_USER)));
         Role rentalerRole = roleRepository.findByName(RoleName.ROLE_RENTALER)
-                .orElseGet(() -> roleRepository.save(new Role(RoleName.ROLE_RENTALER)));
+                .orElseGet(() -> roleRepository.save(new Role(null, RoleName.ROLE_RENTALER)));
 
         testUser = new User();
         testUser.setName("Test User");

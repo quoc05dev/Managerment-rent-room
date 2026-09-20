@@ -76,7 +76,7 @@ class AuthServiceTest {
         request.setPhone("0912345678");
         request.setRole(RoleName.ROLE_USER);
 
-        Role userRole = new Role(RoleName.ROLE_USER);
+        Role userRole = new Role(null, RoleName.ROLE_USER);
 
         when(userRepository.existsByEmail("newuser@gmail.com")).thenReturn(false);
         when(userRepository.findByPhone("0912345678")).thenReturn(Optional.empty());
@@ -100,7 +100,7 @@ class AuthServiceTest {
         request.setAddress("123 Test Street");
         request.setRole(RoleName.ROLE_RENTALER);
 
-        Role rentalerRole = new Role(RoleName.ROLE_RENTALER);
+        Role rentalerRole = new Role(null, RoleName.ROLE_RENTALER);
 
         when(userRepository.existsByEmail("newrentaler@gmail.com")).thenReturn(false);
         when(userRepository.findByPhone("0987654321")).thenReturn(Optional.empty());
