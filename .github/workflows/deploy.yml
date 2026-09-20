@@ -116,4 +116,8 @@ jobs:
             echo "=== [4/4] Building and starting containers ==="
             docker compose up -d --build
 
+            echo "=== [5/5] Reloading host nginx ==="
+            sudo cp ~/Quoc/Managerment-rent-room/deploy/quock6.click.conf /etc/nginx/sites-available/quock6.click.conf
+            sudo nginx -s reload
+
             echo "=== Deploy completed at $(date) ==="
