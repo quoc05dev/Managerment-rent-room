@@ -51,7 +51,8 @@ public class StatisticalServiceImpl extends BaseService implements StatisticalSe
         TotalNumberRequest totalNumberRequest = new TotalNumberRequest();
         totalNumberRequest.setNumberOfRoom((int) roomRepository.countAllByUser(user));
         totalNumberRequest.setNumberOfEmptyRoom((int) roomRepository.countAllByStatusAndUser(RoomStatus.ROOM_RENT,user) + (int) roomRepository.countAllByStatusAndUser(RoomStatus.CHECKED_OUT,user));
-        totalNumberRequest.setNumberOfPeople((int) contractRepository.sumNumOfPeople());
+        Long numOfPeople = contractRepository.sumNumOfPeople();
+        totalNumberRequest.setNumberOfPeople(numOfPeople != null ? numOfPeople.intValue() : 0);
         totalNumberRequest.setRevenue(BigDecimal.valueOf(total));
         return totalNumberRequest;
     }

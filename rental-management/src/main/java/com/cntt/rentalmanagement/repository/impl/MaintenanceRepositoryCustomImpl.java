@@ -72,11 +72,12 @@ public class MaintenanceRepositoryCustomImpl implements MaintenanceRepositoryCus
 
         Integer sumPrice;
         try {
-            sumPrice = ((Number) query.getSingleResult()).intValue();
-        } catch (NoResultException e) {
+            Object result = query.getSingleResult();
+            sumPrice = result != null ? ((Number) result).intValue() : 0;
+        } catch (Exception e) {
             sumPrice = 0;
         }
 
-        return BigDecimal.valueOf(sumPrice);
+        return BigDecimal.valueOf(sumPrice != null ? sumPrice : 0);
     }
 }

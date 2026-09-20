@@ -80,13 +80,14 @@ function DashboardRentaler(props) {
     useEffect(() => {
         getByMonth()
           .then((revenueData) => {
+            const list = (revenueData && Array.isArray(revenueData.content)) ? revenueData.content : [];
             setUserData((prevUserData) => ({
               ...prevUserData,
-              labels: revenueData.content.map((data) => data.month),
+              labels: list.map((data) => data.month),
               datasets: [
                 {
                   ...prevUserData.datasets[0],
-                  data: revenueData.content.map((data) => data.revenue),
+                  data: list.map((data) => data.revenue),
                 },
               ],
             }));
@@ -97,13 +98,14 @@ function DashboardRentaler(props) {
 
           getByCost()
           .then((revenueData) => {
+            const list = (revenueData && Array.isArray(revenueData.content)) ? revenueData.content : [];
             setCostData((prevUserData) => ({
               ...prevUserData,
-              labels: revenueData.content.map((data) => data.name),
+              labels: list.map((data) => data.name),
               datasets: [
                 {
                   ...prevUserData.datasets[0],
-                  data: revenueData.content.map((data) => data.cost),
+                  data: list.map((data) => data.cost),
                 },
               ],
             }));
@@ -223,7 +225,7 @@ function DashboardRentaler(props) {
                                                 </div>
                                             </div>
                                         </div>
-                                        <h1 class="mt-1 mb-4" style={{ fontSize: "xx-large" }}>{number.revenue.toLocaleString('vi-VN', {
+                                        <h1 class="mt-1 mb-4" style={{ fontSize: "xx-large" }}>{(Number(number?.revenue) || 0).toLocaleString('vi-VN', {
                                             style: 'currency',
                                             currency: 'VND',
                                         })}</h1>
