@@ -161,7 +161,13 @@ public class RoomServiceImpl extends BaseService implements RoomService {
     @Override
     public Page<RoomResponse> getRentOfHome() {
         Pageable pageable = PageRequest.of(0,100);
-        return mapperUtils.convertToResponsePage(roomRepository.getAllRentOfHome( getUserId(), pageable), RoomResponse.class, pageable);
+        Long userId = null;
+        try {
+            userId = getUserId();
+        } catch (Exception e) {
+            // Public endpoint - no user required
+        }
+        return mapperUtils.convertToResponsePage(roomRepository.getAllRentOfHome(userId, pageable), RoomResponse.class, pageable);
     }
     
     @Override
