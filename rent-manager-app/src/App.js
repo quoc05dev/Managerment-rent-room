@@ -195,7 +195,7 @@ function App() {
           <Route exact path="/success-comfirmed/:email" element={<SuccessConfirmed />} />
           <Route exact path="/profile" element={<Profile authenticated={authenticated} loadCurrentUser={loadCurrentlyLoggedInUser} currentUser={currentUser} onLogout={handleLogout} />} />
           <Route exact path="/change-password" element={<ChangePasswordOfUser authenticated={authenticated} currentUser={currentUser} onLogout={handleLogout} />} />
-          <Route exact path="/login" element={<Login authenticated={authenticated} onLoginSuccess={handleLoginSuccess} />} />
+          <Route exact path="/login" element={<Login authenticated={authenticated} currentUser={currentUser} role={role} onLoginSuccess={handleLoginSuccess} />} />
           <Route exact path="/login-rentaler" element={<LoginRentaler authenticated={authenticated} currentUser={currentUser} role={role} onLoginSuccess={handleLoginSuccess} />} />
           <Route exact path="/login-admin" element={<LoginAdmin authenticated={authenticated} currentUser={currentUser} role={role} onLoginSuccess={handleLoginSuccess} />} />
           <Route exact path="/signup" element={<Signup authenticated={authenticated} currentUser={currentUser} role={role} />} />

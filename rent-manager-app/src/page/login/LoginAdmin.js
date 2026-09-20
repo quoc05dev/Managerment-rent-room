@@ -27,13 +27,26 @@ function LoginAdmin(props) {
         }
     }, [location.state, location.pathname, history]);
 
-    console.log("AUTH", props.authenticated, props)
-    if (props.authenticated && props.role === "ROLE_ADMIN") {
-        return <Navigate
-            to={{
-                pathname: "/admin",
-                state: { from: location }
-            }} />;
+    if (props.authenticated) {
+        if (props.role === "ROLE_ADMIN") {
+            return <Navigate
+                to={{
+                    pathname: "/admin",
+                    state: { from: location }
+                }} />;
+        } else if (props.role === "ROLE_RENTALER") {
+            return <Navigate
+                to={{
+                    pathname: "/rentaler",
+                    state: { from: location }
+                }} />;
+        } else {
+            return <Navigate
+                to={{
+                    pathname: "/",
+                    state: { from: location }
+                }} />;
+        }
     }
 
     return (
