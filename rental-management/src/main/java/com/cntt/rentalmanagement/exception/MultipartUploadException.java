@@ -21,19 +21,19 @@ public class MultipartUploadException {
 
     @ExceptionHandler({ IllegalArgumentException.class })
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ResponseEntity<?> handleException(IllegalArgumentException e) {
+    public ResponseEntity<?> handleIllegalArgument(IllegalArgumentException e) {
         return ResponseEntity.ok(MessageResponse.builder().message("Đăng nhập để sử dụng chức năng.").build());
     }
 
     @ExceptionHandler({ BadRequestException.class })
-    @ResponseStatus(HttpStatus.FORBIDDEN)
-    public ResponseEntity<?> handleBadRequestException(BadRequestException e) {
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<?> handleBadRequest(BadRequestException e) {
         return ResponseEntity.ok(MessageResponse.builder().message(e.getMessage()).build());
     }
 
     @ExceptionHandler({ Exception.class })
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ResponseEntity<?> handleException(Exception e) {
+    public ResponseEntity<?> handleGenericException(Exception e) {
         return ResponseEntity.ok(MessageResponse.builder().message("Đã có lỗi xảy ra. Vui lòng thử lại.").build());
     }
 }
