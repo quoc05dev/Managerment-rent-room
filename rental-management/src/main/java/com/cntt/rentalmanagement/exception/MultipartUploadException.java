@@ -27,7 +27,13 @@ public class MultipartUploadException {
 
     @ExceptionHandler({ BadRequestException.class })
     @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ResponseEntity<?> handleBadRequestException(BadRequestException e) {
+        return ResponseEntity.ok(MessageResponse.builder().message(e.getMessage()).build());
+    }
+
+    @ExceptionHandler({ Exception.class })
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<?> handleException(Exception e) {
-        return ResponseEntity.ok(MessageResponse.builder().message("Forbidden.").build());
+        return ResponseEntity.ok(MessageResponse.builder().message("Đã có lỗi xảy ra. Vui lòng thử lại.").build());
     }
 }

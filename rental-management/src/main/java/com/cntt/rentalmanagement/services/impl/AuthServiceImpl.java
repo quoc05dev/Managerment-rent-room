@@ -13,7 +13,7 @@ import com.cntt.rentalmanagement.secruity.TokenProvider;
 import com.cntt.rentalmanagement.services.AuthService;
 import com.cntt.rentalmanagement.services.BaseService;
 import com.cntt.rentalmanagement.services.FileStorageService;
-import org.apache.activemq.kaha.impl.index.BadMagicException;
+// removed BadMagicException import - using BadRequestException instead
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -73,7 +73,7 @@ public class AuthServiceImpl extends BaseService implements AuthService {
         }
 
         if (userRepository.findByPhone(signUpRequest.getPhone()).isPresent()) {
-            throw new BadMagicException("Số điện thoại đã được sử dụng.");
+            throw new BadRequestException("Số điện thoại đã được sử dụng.");
         }
 
         if (!signUpRequest.getPassword().equals(signUpRequest.getConfirmPassword())) {
