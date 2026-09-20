@@ -29,4 +29,6 @@ public interface AuthService {
     MessageResponse lockAccount(Long id);
 
     MessageResponse uploadProfile(MultipartFile file, String zalo, String facebook, String address);
+
+    MessageResponse resendConfirmationEmail(EmailRequest emailRequest) throws MessagingException, IOException;
 }

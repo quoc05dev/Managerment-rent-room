@@ -105,6 +105,14 @@ export function signup(signupRequest) {
     });
 }
 
+export function resendConfirmation(emailRequest) {
+    return request({
+        url: API_BASE_URL + "/auth/resend-confirmation",
+        method: 'POST',
+        body: JSON.stringify(emailRequest)
+    });
+}
+
 export function changePassword(changePasswordRequest) {
     if(!localStorage.getItem(ACCESS_TOKEN)) {
         return Promise.reject("No access token set.");

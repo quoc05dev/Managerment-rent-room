@@ -266,5 +266,21 @@ public class AuthServiceImpl extends BaseService implements AuthService {
             return new String(is.readAllBytes(), StandardCharsets.UTF_8);
         }
     }
+
+    @Override
+    public MessageResponse resendConfirmationEmail(EmailRequest emailRequest) throws MessagingException, IOException {
+        User user = userRepository.findByEmail(emailRequest.getEmail())
+                .orElseThrow(() -> new BadRequestException("Email này không tồn tại."));
+        if (Boolean.TRUE.equals(user.getIsConfirmed())) {
+            throw new BadRequestException("Tài khoản này đã được xác thực rồi.");
+        }
+        try {
+            sendEmailConfirmed(emailRequest.getEmail(), user.getName());
+        } catch (Exception e) {
+            throw new BadRequestException("Không thể gửi email xác thực. Vui lòng thử lại sau.");
+        }
+        return MessageResponse.builder().message("Email xác thực đã được gửi lại. Vui lòng kiểm tra hộp thư của bạn.").build();
+    }
 }
+
 

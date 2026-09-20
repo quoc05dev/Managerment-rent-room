@@ -4,7 +4,7 @@ import { ACCESS_TOKEN, FACEBOOK_AUTH_URL, GOOGLE_AUTH_URL } from "../../constant
 import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useEffect } from "react";
-import { login } from "../../services/fetch/ApiUtils";
+import { login, resendConfirmation } from "../../services/fetch/ApiUtils";
 import { useState } from "react";
 
 function Login(props) {
@@ -72,7 +72,8 @@ function SocialLogin() {
         <div className="social-login">
             <a href={FACEBOOK_AUTH_URL} className="facebook">
                 <span className="icon-facebook mr-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="1.5em" viewBox="0 0 512 512"><path d="M504 256C504 119 393 8 256 8S8 119 8 256c0 123.78 90.69 226.38 209.25 245V327.69h-63V256h63v-54.64c0-62.15 37-96.48 93.67-96.48 27.14 0 55.52 4.84 55.52 4.84v61h-31.28c-30.8 0-40.41 19.12-40.41 38.73V256h68.78l-11 71.69h-57.78V501C413.31 482.38 504 379.78 504 256z" /></svg>                                                    </span>
+                    <svg xmlns="http://www.w3.org/2000/svg" height="1.5em" viewBox="0 0 512 512"><path d="M504 256C504 119 393 8 256 8S8 119 8 256c0 123.78 90.69 226.38 209.25 245V327.69h-63V256h63v-54.64c0-62.15 37-96.48 93.67-96.48 27.14 0 55.52 4.84 55.52 4.84v61h-31.28c-30.8 0-40.41 19.12-40.41 38.73V256h68.78l-11 71.69h-57.78V501C413.31 482.38 504 379.78 504 256z" /></svg>
+                </span>
             </a>
             &nbsp;&nbsp;
             <a href={GOOGLE_AUTH_URL} className="google">
@@ -92,6 +93,9 @@ function LoginForm(props) {
         email: '',
         password: ''
     });
+    const [showResendConfirm, setShowResendConfirm] = useState(false);
+    const [unconfirmedEmail, setUnconfirmedEmail] = useState('');
+    const [resendLoading, setResendLoading] = useState(false);
 
     const handleInputChange = event => {
         const target = event.target;
@@ -113,32 +117,96 @@ function LoginForm(props) {
             .then(response => {
                 localStorage.setItem(ACCESS_TOKEN, response.accessToken);
                 toast.success("Bạn đã đăng nhập thành công!!");
+                setShowResendConfirm(false);
                 if (props.onLoginSuccess) {
                     props.onLoginSuccess();
                 } else {
                     window.location.href = "/";
                 }
             }).catch(error => {
-                toast.error((error && error.message) || 'Oops! Có điều gì đó xảy ra. Vui lòng thử lại!');
+                const errorCode = error && error.errorCode;
+                const message = (error && error.message) || 'Oops! Có điều gì đó xảy ra. Vui lòng thử lại!';
+
+                if (errorCode === 'ACCOUNT_NOT_CONFIRMED') {
+                    setUnconfirmedEmail(formState.email);
+                    setShowResendConfirm(true);
+                    toast.warn(message);
+                } else {
+                    setShowResendConfirm(false);
+                    toast.error(message);
+                }
+            });
+    };
+
+    const handleResendConfirmation = () => {
+        if (!unconfirmedEmail) return;
+        setResendLoading(true);
+        resendConfirmation({ email: unconfirmedEmail })
+            .then(response => {
+                toast.success(response.message || 'Email xác thực đã được gửi lại!');
+                setShowResendConfirm(false);
+            })
+            .catch(error => {
+                toast.error((error && error.message) || 'Không thể gửi email. Vui lòng thử lại!');
+            })
+            .finally(() => {
+                setResendLoading(false);
             });
     };
 
     return (
-        <form onSubmit={handleSubmit}>
-            <div className="form-group first">
-                <span>Email</span>
-                <input type="email" className="form-control" name="email" value={formState.email} onChange={handleInputChange} required />
+        <>
+            <form onSubmit={handleSubmit}>
+                <div className="form-group first">
+                    <span>Email</span>
+                    <input type="email" className="form-control" name="email" value={formState.email} onChange={handleInputChange} required />
 
-            </div>
-            <div className="form-group last mb-4">
-                <span>Mật khẩu</span>
-                <input type="password" className="form-control" name="password" value={formState.password} onChange={handleInputChange} required />
-            </div>
-            <div className="d-flex mb-5 align-items-center">
-                <span className="ml-auto"><a href="/forgot-password" className="forgot-pass">Quên mật khẩu</a></span>
-            </div>
-            <input type="submit" value="Đăng nhập" className="btn text-white btn-block btn-primary" />
-        </form>
+                </div>
+                <div className="form-group last mb-4">
+                    <span>Mật khẩu</span>
+                    <input type="password" className="form-control" name="password" value={formState.password} onChange={handleInputChange} required />
+                </div>
+                <div className="d-flex mb-5 align-items-center">
+                    <span className="ml-auto"><a href="/forgot-password" className="forgot-pass">Quên mật khẩu</a></span>
+                </div>
+                <input type="submit" value="Đăng nhập" className="btn text-white btn-block btn-primary" />
+            </form>
+
+            {showResendConfirm && (
+                <div style={{
+                    marginTop: '16px',
+                    padding: '14px 16px',
+                    background: '#fff8e1',
+                    border: '1px solid #ffe082',
+                    borderRadius: '8px',
+                    fontSize: '14px'
+                }}>
+                    <p style={{ margin: '0 0 10px', color: '#5d4037', fontWeight: 500 }}>
+                        ⚠️ Tài khoản <strong>{unconfirmedEmail}</strong> chưa được xác thực.
+                    </p>
+                    <p style={{ margin: '0 0 10px', color: '#6d4c41' }}>
+                        Vui lòng kiểm tra email để tìm link xác thực, hoặc nhấn nút bên dưới để gửi lại.
+                    </p>
+                    <button
+                        type="button"
+                        onClick={handleResendConfirmation}
+                        disabled={resendLoading}
+                        style={{
+                            background: '#e65100',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '8px 18px',
+                            cursor: resendLoading ? 'not-allowed' : 'pointer',
+                            fontWeight: 600,
+                            opacity: resendLoading ? 0.7 : 1
+                        }}
+                    >
+                        {resendLoading ? 'Đang gửi...' : '📧 Gửi lại email xác thực'}
+                    </button>
+                </div>
+            )}
+        </>
     )
 }
 

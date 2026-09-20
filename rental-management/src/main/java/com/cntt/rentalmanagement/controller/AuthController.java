@@ -70,4 +70,9 @@ public class AuthController {
     private ResponseEntity<?> lockedAccount(@PathVariable Long id) {
         return ResponseEntity.ok(authService.lockAccount(id));
     }
+
+    @PostMapping("/resend-confirmation")
+    public ResponseEntity<?> resendConfirmationEmail(@Valid @RequestBody EmailRequest emailRequest) throws MessagingException, IOException {
+        return ResponseEntity.ok(authService.resendConfirmationEmail(emailRequest));
+    }
 }
