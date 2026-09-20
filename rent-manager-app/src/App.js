@@ -236,9 +236,7 @@ function App() {
           <Route exact path="/rentaler/export-bill/:id" element={<ExportBillRequier authenticated={authenticated} currentUser={currentUser} role={role} onLogout={handleLogout} />} />
           <Route exact path="/rentaler/export-contract/:id" element={<ExportCheckoutRoom authenticated={authenticated} currentUser={currentUser} role={role} onLogout={handleLogout} />} />
           <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
-        </Routes>
-        <Routes>
-          <Route path="*" exact={true} component={NotFound} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
 
