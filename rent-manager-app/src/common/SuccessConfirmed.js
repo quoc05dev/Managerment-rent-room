@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import './ForgotPassword.css';
+import '../page/login/Login.css';
 import {  useNavigate, useLocation } from 'react-router-dom';
 import { useState } from "react";
 import { changeConfirmedStatus} from "../services/fetch/ApiUtils";
@@ -18,8 +18,8 @@ function SuccessConfirmed() {
                             <div className="row justify-content-center">
                                 <div className="col-md-8">
                                     <div className="mb-4">
-                                        <h3>Xác thực tài khoản thành công🎉✨🎉</h3>
-                                        <p className="mb-4">Bạn quay lại trang chủ và đăng nhập tài khoản của mình.</p>
+                                        <h3 style={{ color: '#2eca6a' }}>Xác thực tài khoản thành công</h3>
+                                        <p className="mb-4">Bạn có thể quay lại trang chủ và đăng nhập tài khoản của mình.</p>
                                     </div>
                                     <AccountStatus />
                                 </div>

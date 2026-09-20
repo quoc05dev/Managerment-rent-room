@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import './ForgotPassword.css';
+import '../page/login/Login.css';
 import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useState } from "react";
 import { forgotPassword } from "../services/fetch/ApiUtils";
@@ -12,7 +12,7 @@ class ForgotPassword extends Component {
         return (
             <>
                 <Header authenticated={this.props.authenticated} currentUser={this.props.currentUser} onLogout={this.props.onLogout} />
-                <div className="body-content" style={{ marginTop: '220px', minHeight: '500px' }}> {/* Thêm một wrapper cho phần "body" */}
+                <div className="content">
                     <div className="container">
                         <div className="row">
                             <div className="col-md-6 order-md-2">
@@ -22,8 +22,8 @@ class ForgotPassword extends Component {
                                 <div className="row justify-content-center">
                                     <div className="col-md-8">
                                         <div className="mb-4">
-                                            <h3>Quên mật khẩu</h3>
-                                            <p className="mb-4">Điền mail của trang mà bạn đăng nhập trên trang web của chúng tôi.</p>
+                                            <h3>Quên mật khẩu <a href="/" style={{ textDecoration: 'none' }}>Estate<span className="color-b">Agency</span></a></h3>
+                                            <p className="mb-4">Điền email để nhận link đặt lại mật khẩu.</p>
                                         </div>
                                         <ForgotPasswordForm />
                                     </div>

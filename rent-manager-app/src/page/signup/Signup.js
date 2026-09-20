@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import './Signup.css';
+import '../login/Login.css';
 import { toast } from 'react-toastify';
 import { signup } from "../../services/fetch/ApiUtils";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
@@ -66,8 +66,8 @@ function Signup(props) {
                             <div className="row justify-content-center">
                                 <div className="col-md-8">
                                     <div className="mb-4">
-                                        <h3>Đăng kí <a href="/" style={{ textDecoration: 'none' }}>Estate<span className="color-b">Agency</span></a></h3>
-                                        <p className="mb-4">Nếu bạn có tài khoản. <a href="/login">Đăng nhập</a></p>
+                                        <h3>Đăng ký <a href="/" style={{ textDecoration: 'none' }}>Estate<span className="color-b">Agency</span></a></h3>
+                                        <p className="mb-4">Nếu bạn đã có tài khoản. <a href="/login">Đăng nhập</a></p>
                                     </div>
                                     <form onSubmit={handleSubmit}>
                                         <div className="form-group first">

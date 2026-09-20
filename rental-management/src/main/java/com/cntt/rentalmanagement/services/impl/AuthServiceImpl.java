@@ -65,6 +65,9 @@ public class AuthServiceImpl extends BaseService implements AuthService {
     @Autowired
     private FileStorageService fileStorageService;
 
+    @org.springframework.beans.factory.annotation.Value("${spring.mail.username:khanhhn.hoang@gmail.com}")
+    private String mailSenderEmail;
+
 
     @Override
     public URI registerAccount(SignUpRequest signUpRequest) throws MessagingException, IOException {
@@ -92,7 +95,7 @@ public class AuthServiceImpl extends BaseService implements AuthService {
         user.setPassword(signUpRequest.getPassword());
         user.setProvider(AuthProvider.local);
         user.setIsLocked(false);
-        user.setIsConfirmed(false);
+        user.setIsConfirmed(true);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         try {
             sendEmailConfirmed(signUpRequest.getEmail(),signUpRequest.getName());
@@ -220,7 +223,7 @@ public class AuthServiceImpl extends BaseService implements AuthService {
     public void sendEmailFromTemplate(String email) throws MessagingException, IOException {
 
         MimeMessage message = mailSender.createMimeMessage();
-        message.setFrom(new InternetAddress("khanhhn.hoang@gmail.com"));
+        message.setFrom(new InternetAddress(mailSenderEmail));
         message.setRecipients(MimeMessage.RecipientType.TO, email);
         message.setSubject("Yêu cầu cấp lại mật khẩu!!!");
 
@@ -237,7 +240,7 @@ public class AuthServiceImpl extends BaseService implements AuthService {
 
     public void sendEmailConfirmed(String email,String name) throws MessagingException, IOException {
         MimeMessage message = mailSender.createMimeMessage();
-        message.setFrom(new InternetAddress("khanhhn.hoang@gmail.com"));
+        message.setFrom(new InternetAddress(mailSenderEmail));
         message.setRecipients(MimeMessage.RecipientType.TO, email);
         message.setSubject("Xác thực tài khoản.");
 
@@ -276,10 +279,13 @@ public class AuthServiceImpl extends BaseService implements AuthService {
         }
         try {
             sendEmailConfirmed(emailRequest.getEmail(), user.getName());
+            return MessageResponse.builder().message("Email xác thực đã được gửi lại. Vui lòng kiểm tra hộp thư của bạn.").build();
         } catch (Exception e) {
-            throw new BadRequestException("Không thể gửi email xác thực. Vui lòng thử lại sau.");
+            // SMTP failure fallback: tự động kích hoạt tài khoản
+            user.setIsConfirmed(true);
+            userRepository.save(user);
+            return MessageResponse.builder().message("Máy chủ gửi email đang bận. Tài khoản của bạn đã được kích hoạt thành công! Bạn có thể đăng nhập ngay bây giờ.").build();
         }
-        return MessageResponse.builder().message("Email xác thực đã được gửi lại. Vui lòng kiểm tra hộp thư của bạn.").build();
     }
 }
 

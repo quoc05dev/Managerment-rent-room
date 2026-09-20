@@ -1,5 +1,5 @@
 import React from "react";
-import './ForgotPassword.css';
+import '../page/login/Login.css';
 import {  useNavigate, useLocation } from 'react-router-dom';
 import { useState } from "react";
 import { resetPassword } from "../services/fetch/ApiUtils";
@@ -18,7 +18,7 @@ function ResetPassword() {
                             <div className="row justify-content-center">
                                 <div className="col-md-8">
                                     <div className="mb-4">
-                                        <h3>Thay đổi mật khẩu mới</h3>
+                                        <h3>Thay đổi mật khẩu <a href="/" style={{ textDecoration: 'none' }}>Estate<span className="color-b">Agency</span></a></h3>
                                         <p className="mb-4">Cập nhật mật khẩu mới của bạn.</p>
                                     </div>
                                     <ForgotPasswordForm />

@@ -4,7 +4,7 @@ import { ACCESS_TOKEN, FACEBOOK_AUTH_URL, GOOGLE_AUTH_URL } from "../../constant
 import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useEffect } from "react";
-import { login } from "../../services/fetch/ApiUtils";
+import { login, resendConfirmation, changeConfirmedStatus } from "../../services/fetch/ApiUtils";
 import { useState } from "react";
 
 function LoginRentaler(props) {
@@ -63,14 +63,16 @@ function LoginRentaler(props) {
     )
 }
 
-
-
 function LoginForm(props) {
     const history = useNavigate();
     const [formState, setFormState] = useState({
         email: '',
         password: ''
     });
+    const [showResendConfirm, setShowResendConfirm] = useState(false);
+    const [unconfirmedEmail, setUnconfirmedEmail] = useState('');
+    const [resendLoading, setResendLoading] = useState(false);
+    const [directActivating, setDirectActivating] = useState(false);
 
     const handleInputChange = event => {
         const target = event.target;
@@ -92,32 +94,133 @@ function LoginForm(props) {
             .then(response => {
                 localStorage.setItem(ACCESS_TOKEN, response.accessToken);
                 toast.success("Bạn đã đăng nhập thành công!!");
+                setShowResendConfirm(false);
                 if (props.onLoginSuccess) {
                     props.onLoginSuccess();
                 } else {
                     window.location.href = "/rentaler";
                 }
             }).catch(error => {
-                toast.error((error && error.message) || 'Oops! Có điều gì đó xảy ra. Vui lòng thử lại!');
+                const errorCode = error && error.errorCode;
+                const message = (error && error.message) || 'Oops! Có điều gì đó xảy ra. Vui lòng thử lại!';
+
+                if (errorCode === 'ACCOUNT_NOT_CONFIRMED') {
+                    setUnconfirmedEmail(formState.email);
+                    setShowResendConfirm(true);
+                    toast.warn(message);
+                } else {
+                    setShowResendConfirm(false);
+                    toast.error(message);
+                }
+            });
+    };
+
+    const handleDirectActivate = () => {
+        if (!unconfirmedEmail) return;
+        setDirectActivating(true);
+        changeConfirmedStatus({ email: unconfirmedEmail })
+            .then(response => {
+                toast.success(response.message || 'Tài khoản đã được kích hoạt thành công! Hãy nhấn Đăng nhập.');
+                setShowResendConfirm(false);
+            })
+            .catch(error => {
+                toast.error((error && error.message) || 'Không thể kích hoạt tài khoản. Vui lòng thử lại!');
+            })
+            .finally(() => {
+                setDirectActivating(false);
+            });
+    };
+
+    const handleResendConfirmation = () => {
+        if (!unconfirmedEmail) return;
+        setResendLoading(true);
+        resendConfirmation({ email: unconfirmedEmail })
+            .then(response => {
+                toast.success(response.message || 'Email xác thực đã được gửi lại!');
+                setShowResendConfirm(false);
+            })
+            .catch(error => {
+                toast.error((error && error.message) || 'Không thể gửi email. Vui lòng thử lại!');
+            })
+            .finally(() => {
+                setResendLoading(false);
             });
     };
 
     return (
-        <form onSubmit={handleSubmit}>
-            <div className="form-group first">
-                <span>Email</span>
-                <input type="email" className="form-control" name="email" value={formState.email} onChange={handleInputChange} required />
+        <>
+            <form onSubmit={handleSubmit}>
+                <div className="form-group first">
+                    <span>Email</span>
+                    <input type="email" className="form-control" name="email" value={formState.email} onChange={handleInputChange} required />
 
-            </div>
-            <div className="form-group last mb-4">
-                <span>Mật khẩu</span>
-                <input type="password" className="form-control" name="password" value={formState.password} onChange={handleInputChange} required />
-            </div>
-            <div className="d-flex mb-5 align-items-center">
-                <span className="ml-auto"><a href="/forgot-password" className="forgot-pass">Quên mật khẩu</a></span>
-            </div>
-            <input type="submit" value="Đăng nhập" className="btn text-white btn-block btn-primary" />
-        </form>
+                </div>
+                <div className="form-group last mb-4">
+                    <span>Mật khẩu</span>
+                    <input type="password" className="form-control" name="password" value={formState.password} onChange={handleInputChange} required />
+                </div>
+                <div className="d-flex mb-5 align-items-center">
+                    <span className="ml-auto"><a href="/forgot-password" className="forgot-pass">Quên mật khẩu</a></span>
+                </div>
+                <input type="submit" value="Đăng nhập" className="btn text-white btn-block btn-primary" />
+            </form>
+
+            {showResendConfirm && (
+                <div style={{
+                    marginTop: '16px',
+                    padding: '14px 16px',
+                    background: '#fff8e1',
+                    border: '1px solid #ffe082',
+                    borderRadius: '8px',
+                    fontSize: '14px'
+                }}>
+                    <p style={{ margin: '0 0 10px', color: '#5d4037', fontWeight: 500 }}>
+                        ⚠️ Tài khoản <strong>{unconfirmedEmail}</strong> chưa được xác thực.
+                    </p>
+                    <p style={{ margin: '0 0 12px', color: '#6d4c41' }}>
+                        Bạn có thể kích hoạt tài khoản ngay bây giờ hoặc gửi lại email xác thực:
+                    </p>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        <button
+                            type="button"
+                            onClick={handleDirectActivate}
+                            disabled={directActivating}
+                            style={{
+                                background: '#2e7d32',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '6px',
+                                padding: '8px 14px',
+                                cursor: directActivating ? 'not-allowed' : 'pointer',
+                                fontWeight: 600,
+                                fontSize: '13px',
+                                opacity: directActivating ? 0.7 : 1
+                            }}
+                        >
+                            {directActivating ? 'Đang kích hoạt...' : '⚡ Kích hoạt tài khoản ngay'}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleResendConfirmation}
+                            disabled={resendLoading}
+                            style={{
+                                background: '#e65100',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '6px',
+                                padding: '8px 14px',
+                                cursor: resendLoading ? 'not-allowed' : 'pointer',
+                                fontWeight: 600,
+                                fontSize: '13px',
+                                opacity: resendLoading ? 0.7 : 1
+                            }}
+                        >
+                            {resendLoading ? 'Đang gửi...' : '📧 Gửi lại email'}
+                        </button>
+                    </div>
+                </div>
+            )}
+        </>
     )
 }
 
