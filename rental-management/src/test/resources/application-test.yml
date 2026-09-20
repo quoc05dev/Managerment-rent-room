@@ -1,0 +1,42 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=false
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+  sql:
+    init:
+      mode: always
+      platform: h2
+  mail:
+    host: localhost
+    port: 25
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.amqp.AutoConfiguration
+      - org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration
+
+file:
+  uploadDir: ${java.io.tmpdir}/test-upload/
+  tempExportExcel: ${java.io.tmpdir}/test-export/
+
+app:
+  auth:
+    tokenSecret: testSecretKeyForUnitTestingPurposesOnly1234567890abcdef1234567890abcdef
+    tokenExpirationMsec: 86400000
+  cors:
+    allowedOrigins: http://localhost:3000
+  oauth2:
+    authorizedRedirectUris:
+      - http://localhost:3000/oauth2/redirect
+
+logging:
+  level:
+    com.cntt.rentalmanagement: DEBUG

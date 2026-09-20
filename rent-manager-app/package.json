@@ -68,5 +68,13 @@
     },
     "devDependencies": {
         "@babel/standalone": "^7.22.9"
+    },
+    "jest": {
+        "moduleNameMapper": {
+            "^swiper/react$": "<rootDir>/src/__mocks__/swiper-react.js",
+            "^swiper/modules$": "<rootDir>/src/__mocks__/swiper-modules.js",
+            "^swiper/css(.*)$": "<rootDir>/src/__mocks__/swiper-css.js",
+            "^swiper$": "<rootDir>/src/__mocks__/swiper-react.js"
+        }
     }
 }

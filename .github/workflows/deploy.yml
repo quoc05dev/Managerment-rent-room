@@ -117,7 +117,10 @@ jobs:
             docker compose up -d --build
 
             echo "=== [5/5] Reloading host nginx ==="
-            sudo cp ~/Quoc/Managerment-rent-room/deploy/quock6.click.conf /etc/nginx/sites-available/quock6.click.conf
-            sudo nginx -s reload
+            ls -la /etc/nginx/sites-available/ || echo "sites-available not found"
+            ls -la /etc/nginx/sites-enabled/ || echo "sites-enabled not found"
+            ls -la /etc/nginx/conf.d/ || echo "conf.d not found"
+            cat /etc/nginx/sites-enabled/* 2>/dev/null || echo "no sites-enabled config"
+            sudo nginx -t && sudo nginx -s reload || echo "nginx reload failed"
 
             echo "=== Deploy completed at $(date) ==="
