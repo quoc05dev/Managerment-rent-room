@@ -1,8 +1,9 @@
-INSERT IGNORE INTO roles (name) VALUES
-     ('ROLE_ADMIN'),
-     ('ROLE_RENTALER'),
-     ('ROLE_USER');
+MERGE INTO roles (name) VALUES ('ROLE_ADMIN');
+MERGE INTO roles (name) VALUES ('ROLE_RENTALER');
+MERGE INTO roles (name) VALUES ('ROLE_USER');
 
-INSERT IGNORE INTO location(id, city_name) VALUES (1, 'Ha Noi');
+MERGE INTO location(id, city_name) VALUES (1, 'Ha Noi');
 
-INSERT IGNORE INTO category(id, name) VALUES (1, 'Bat dong san'), (2, 'Phong tro'), (3, 'Chung cu mini');
+MERGE INTO category(id, name) VALUES (1, 'Bat dong san');
+MERGE INTO category(id, name) VALUES (2, 'Phong tro');
+MERGE INTO category(id, name) VALUES (3, 'Chung cu mini');

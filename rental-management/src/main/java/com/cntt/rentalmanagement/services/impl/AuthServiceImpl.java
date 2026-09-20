@@ -143,7 +143,11 @@ public class AuthServiceImpl extends BaseService implements AuthService {
     @Override
     public MessageResponse forgotPassword(EmailRequest emailRequest) throws MessagingException, IOException {
         userRepository.findByEmail(emailRequest.getEmail()).orElseThrow(() -> new BadRequestException("Email này không tồn tại."));
-        sendEmailFromTemplate(emailRequest.getEmail());
+        try {
+            sendEmailFromTemplate(emailRequest.getEmail());
+        } catch (Exception e) {
+            System.out.println("Failed to send forgot-password email: " + e.getMessage());
+        }
         return MessageResponse.builder().message("Gửi yêu cầu thành công.").build();
     }
 

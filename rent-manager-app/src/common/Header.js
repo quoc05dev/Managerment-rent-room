@@ -42,6 +42,41 @@ class Header extends Component {
                                         Người cho thuê
                                     </NavLink>
                                 </li>
+
+                                {(() => {
+                                    const uRole = (this.props.currentUser && this.props.currentUser.roles && (
+                                        typeof this.props.currentUser.roles[0] === 'string'
+                                            ? this.props.currentUser.roles[0]
+                                            : (this.props.currentUser.roles[0]?.name?.trim() || this.props.currentUser.roles[0]?.name)
+                                    )) || this.props.role;
+
+                                    if (uRole === "ROLE_RENTALER") {
+                                        return (
+                                            <>
+                                                <li className="nav-item">
+                                                    <NavLink className="nav-link text-success font-weight-bold" to="/rentaler/room-management" style={{ fontWeight: 'bold' }}>
+                                                        Quản lý phòng trọ
+                                                    </NavLink>
+                                                </li>
+                                                <li className="nav-item">
+                                                    <NavLink className="nav-link text-primary font-weight-bold" to="/rentaler" style={{ fontWeight: 'bold' }}>
+                                                        Bảng điều khiển
+                                                    </NavLink>
+                                                </li>
+                                            </>
+                                        );
+                                    }
+                                    if (uRole === "ROLE_ADMIN") {
+                                        return (
+                                            <li className="nav-item">
+                                                <NavLink className="nav-link text-danger font-weight-bold" to="/admin" style={{ fontWeight: 'bold' }}>
+                                                    Trang Quản trị
+                                                </NavLink>
+                                            </li>
+                                        );
+                                    }
+                                    return null;
+                                })()}
                             </ul>
                         </div>
                         {!this.props.authenticated ? (
@@ -66,44 +101,45 @@ class Header extends Component {
                             </>
                         ) : (
                             <>
-                                <div className="profile-info">
+                                <div className="profile-info" style={{ display: 'flex', alignItems: 'center' }}>
+                                    {(() => {
+                                        const uRole = (this.props.currentUser && this.props.currentUser.roles && (
+                                            typeof this.props.currentUser.roles[0] === 'string'
+                                                ? this.props.currentUser.roles[0]
+                                                : (this.props.currentUser.roles[0]?.name?.trim() || this.props.currentUser.roles[0]?.name)
+                                        )) || this.props.role;
+
+                                        if (uRole === "ROLE_RENTALER") {
+                                            return (
+                                                <Link to="/rentaler/add-room" style={{ marginRight: '12px' }}>
+                                                    <button type="button" className="btn btn-success btn-sm" style={{ borderRadius: "20px", fontWeight: 'bold', padding: '6px 14px' }}>
+                                                        ➕ Đăng tin phòng mới
+                                                    </button>
+                                                </Link>
+                                            );
+                                        }
+                                        return null;
+                                    })()}
+
                                     <div className="profile-avatar">
                                         {
-                                            this.props.currentUser.imageUrl ? (
+                                            this.props.currentUser && this.props.currentUser.imageUrl ? (
                                                 <img src={this.props.currentUser.imageUrl}
                                                     alt={this.props.currentUser.name} className="img-fluid rounded-circle border border-dark border-3"
-                                                    style={{ width: "50px" }} />
+                                                    style={{ width: "45px", height: "45px", objectFit: "cover" }} />
 
                                             ) : (
-                                                <div className="text-avatar" style={{    width: "50px",
-                                                    height: "50px"}}>
-                                                    <span style={{lineHeight: "50px"}}>{this.props.currentUser.name && this.props.currentUser.name[0]}</span>
+                                                <div className="text-avatar" style={{ width: "45px", height: "45px" }}>
+                                                    <span style={{ lineHeight: "45px" }}>{this.props.currentUser && this.props.currentUser.name && this.props.currentUser.name[0]}</span>
                                                 </div>
                                             )
                                         }
                                     </div>
                                     <div className="flex-grow-1 ms-3">
-                                        <div className="d-flex flex-row align-items-center mb-2">
-                                            <p className="mb-0 me-2">{this.props.currentUser.name}</p>
-                                            <ul className="mb-0 list-unstyled d-flex flex-row" style={{ color: "#1B7B2C" }}>
-                                                <li>
-                                                    <i className="fas fa-star fa-xs"></i>
-                                                </li>
-                                                <li>
-                                                    <i className="fas fa-star fa-xs"></i>
-                                                </li>
-                                                <li>
-                                                    <i className="fas fa-star fa-xs"></i>
-                                                </li>
-                                                <li>
-                                                    <i className="fas fa-star fa-xs"></i>
-                                                </li>
-                                                <li>
-                                                    <i className="fas fa-star fa-xs"></i>
-                                                </li>
-                                            </ul>
+                                        <div className="d-flex flex-row align-items-center mb-1">
+                                            <p className="mb-0 me-2" style={{ fontWeight: '600' }}>{this.props.currentUser && this.props.currentUser.name}</p>
                                         </div>
-                                        <div>
+                                        <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
                                             {(() => {
                                                 const uRole = (this.props.currentUser && this.props.currentUser.roles && (
                                                     typeof this.props.currentUser.roles[0] === 'string'
@@ -113,15 +149,15 @@ class Header extends Component {
                                                 return (
                                                     <>
                                                         {uRole === "ROLE_RENTALER" && (
-                                                            <Link to="/rentaler">
+                                                            <Link to="/rentaler/room-management">
                                                                 <button type="button" className="btn btn-success btn-sm"
-                                                                    style={{ borderRadius: "20px", marginRight: "8px" }}>🏠 Đăng tin / Quản lý</button>
+                                                                    style={{ borderRadius: "20px" }}>Quản lý phòng</button>
                                                             </Link>
                                                         )}
                                                         {uRole === "ROLE_ADMIN" && (
                                                             <Link to="/admin">
                                                                 <button type="button" className="btn btn-primary btn-sm"
-                                                                    style={{ borderRadius: "20px", marginRight: "8px" }}>⚙️ Trang Quản trị</button>
+                                                                    style={{ borderRadius: "20px" }}>Trang Quản trị</button>
                                                             </Link>
                                                         )}
                                                     </>
@@ -129,9 +165,9 @@ class Header extends Component {
                                             })()}
                                             <Link to="/profile">
                                                 <button type="button" className="btn btn-outline-success btn-sm"
-                                                    style={{ borderRadius: "20px", marginRight: "8px" }}>Hồ Sơ</button>
+                                                    style={{ borderRadius: "20px" }}>Hồ Sơ</button>
                                             </Link>
-                                            <button type="button" className="btn btn-outline-success btn-sm"
+                                            <button type="button" className="btn btn-outline-danger btn-sm"
                                                 style={{ borderRadius: "20px" }} onClick={this.props.onLogout}>Đăng xuất</button>
                                         </div>
                                     </div>

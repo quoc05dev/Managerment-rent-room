@@ -17,10 +17,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.mail.internet.MimeMessage;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -45,8 +51,23 @@ class AuthServiceTest {
     @Mock
     private TokenProvider tokenProvider;
 
+    @Mock
+    private JavaMailSender mailSender;
+
     @InjectMocks
     private AuthServiceImpl authService;
+
+    @BeforeEach
+    void setup() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+        lenient().when(mailSender.createMimeMessage()).thenReturn(mock(MimeMessage.class));
+    }
+
+    @AfterEach
+    void cleanup() {
+        RequestContextHolder.resetRequestAttributes();
+    }
 
     @Test
     @DisplayName("Login - Thanh cong")
@@ -82,6 +103,11 @@ class AuthServiceTest {
         when(userRepository.findByPhone("0912345678")).thenReturn(Optional.empty());
         when(roleRepository.findByName(RoleName.ROLE_USER)).thenReturn(Optional.of(userRole));
         when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User u = invocation.getArgument(0);
+            u.setId(1L);
+            return u;
+        });
 
         var result = authService.registerAccount(request);
         assertThat(result).isNotNull();
@@ -106,6 +132,11 @@ class AuthServiceTest {
         when(userRepository.findByPhone("0987654321")).thenReturn(Optional.empty());
         when(roleRepository.findByName(RoleName.ROLE_RENTALER)).thenReturn(Optional.of(rentalerRole));
         when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User u = invocation.getArgument(0);
+            u.setId(2L);
+            return u;
+        });
 
         var result = authService.registerAccount(request);
         assertThat(result).isNotNull();
@@ -175,6 +206,7 @@ class AuthServiceTest {
 
         User user = new User();
         user.setEmail("test@gmail.com");
+        user.setName("Test User");
 
         when(userRepository.findByEmail("test@gmail.com")).thenReturn(Optional.of(user));
 

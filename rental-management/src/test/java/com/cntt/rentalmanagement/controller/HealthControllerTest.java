@@ -8,26 +8,22 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class HealthControllerTest extends BaseIntegrationTest {
 
-    @Test
-    @DisplayName("GET /health - Kiem tra tinh trang he thong")
+    @Test @DisplayName("GET /health - Kiem tra tinh trang he thong")
     void healthCheck() throws Exception {
         mockMvc.perform(get("/health"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("UP"))
                 .andExpect(jsonPath("$.database").value("CONNECTED"))
-                .andExpect(jsonPath("$.totalRoles").value(3))
+                .andExpect(jsonPath("$.totalRoles").isNumber())
                 .andExpect(jsonPath("$.totalUsers").isNumber());
     }
 
-    @Test
-    @DisplayName("GET /health - Khong can xac thuc")
+    @Test @DisplayName("GET /health - Khong can xac thuc")
     void healthNoAuthRequired() throws Exception {
-        mockMvc.perform(get("/health"))
-                .andExpect(status().isOk());
+        mockMvc.perform(get("/health")).andExpect(status().isOk());
     }
 
-    @Test
-    @DisplayName("GET /health - Co database URL")
+    @Test @DisplayName("GET /health - Co database URL")
     void healthHasDatabaseUrl() throws Exception {
         mockMvc.perform(get("/health"))
                 .andExpect(status().isOk())

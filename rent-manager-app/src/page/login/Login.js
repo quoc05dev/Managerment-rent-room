@@ -27,14 +27,20 @@ function Login(props) {
         }
     }, [location.state, location.pathname, history]);
 
+    const uRole = (props.currentUser && props.currentUser.roles && (
+        typeof props.currentUser.roles[0] === 'string'
+            ? props.currentUser.roles[0]
+            : (props.currentUser.roles[0]?.name?.trim() || props.currentUser.roles[0]?.name)
+    )) || props.role;
+
     if (props.authenticated) {
-        if (props.role === "ROLE_RENTALER") {
+        if (uRole === "ROLE_RENTALER") {
             return <Navigate
                 to={{
-                    pathname: "/rentaler",
+                    pathname: "/rentaler/room-management",
                     state: { from: location }
                 }} />;
-        } else if (props.role === "ROLE_ADMIN") {
+        } else if (uRole === "ROLE_ADMIN") {
             return <Navigate
                 to={{
                     pathname: "/admin",

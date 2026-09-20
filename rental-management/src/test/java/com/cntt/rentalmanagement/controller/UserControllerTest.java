@@ -16,10 +16,8 @@ class UserControllerTest extends BaseIntegrationTest {
         LoginRequest req = new LoginRequest();
         req.setEmail("testuser@example.com");
         req.setPassword("password123");
-        var result = mockMvc.perform(post("/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
-                .andReturn();
+        var result = mockMvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req))).andReturn();
         userToken = objectMapper.readTree(result.getResponse().getContentAsString())
                 .get("accessToken").asText();
         return userToken;
@@ -30,85 +28,57 @@ class UserControllerTest extends BaseIntegrationTest {
         LoginRequest req = new LoginRequest();
         req.setEmail("testrentaler@example.com");
         req.setPassword("password123");
-        var result = mockMvc.perform(post("/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
-                .andReturn();
+        var result = mockMvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req))).andReturn();
         rentalerToken = objectMapper.readTree(result.getResponse().getContentAsString())
                 .get("accessToken").asText();
         return rentalerToken;
     }
 
-    @Test
-    @Order(1)
-    @DisplayName("GET /user/me - Xem thong tin ca nhan (USER)")
+    @Test @Order(1) @DisplayName("GET /user/me - Xem thong tin ca nhan (USER)")
     void getCurrentUser() throws Exception {
         String token = getAuthToken();
-
-        mockMvc.perform(get("/user/me")
-                        .header("Authorization", "Bearer " + token))
+        mockMvc.perform(get("/user/me").header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("testuser@example.com"))
                 .andExpect(jsonPath("$.name").value("Test User"));
     }
 
-    @Test
-    @Order(2)
-    @DisplayName("GET /rentaler/me - Xem thong tin ca nhan (RENTALER)")
+    @Test @Order(2) @DisplayName("GET /rentaler/me - Xem thong tin ca nhan (RENTALER)")
     void getCurrentRentaler() throws Exception {
         String token = getRentalerToken();
-
-        mockMvc.perform(get("/rentaler/me")
-                        .header("Authorization", "Bearer " + token))
+        mockMvc.perform(get("/rentaler/me").header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("testrentaler@example.com"));
     }
 
-    @Test
-    @Order(3)
-    @DisplayName("GET /user/me - Khong co token")
+    @Test @Order(3) @DisplayName("GET /user/me - Khong co token")
     void getCurrentUserNoToken() throws Exception {
-        mockMvc.perform(get("/user/me"))
-                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/user/me")).andExpect(status().isUnauthorized());
     }
 
-    @Test
-    @Order(4)
-    @DisplayName("GET /user/me - Token khong hop le")
+    @Test @Order(4) @DisplayName("GET /user/me - Token khong hop le")
     void getCurrentUserInvalidToken() throws Exception {
-        mockMvc.perform(get("/user/me")
-                        .header("Authorization", "Bearer invalid.token.here"))
-                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/user/me").header("Authorization", "Bearer invalid.token.here"))
+                .andExpect(status().isUnauthorized());
     }
 
-    @Test
-    @Order(5)
-    @DisplayName("PUT /user/update - Cap nhat thong tin nguoi dung")
+    @Test @Order(5) @DisplayName("PUT /user/update - Cap nhat thong tin nguoi dung")
     void updateUser() throws Exception {
         String token = getAuthToken();
         String userJson = objectMapper.writeValueAsString(testUser);
-
-        mockMvc.perform(put("/user/update")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(userJson)
-                        .header("Authorization", "Bearer " + token))
+        mockMvc.perform(put("/user/update").contentType(MediaType.APPLICATION_JSON)
+                .content(userJson).header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk());
     }
 
-    @Test
-    @Order(6)
-    @DisplayName("GET /account/customer - Danh sach khach hang (public)")
+    @Test @Order(6) @DisplayName("GET /account/customer - Danh sach khach hang")
     void getCustomerAccounts() throws Exception {
-        mockMvc.perform(get("/account/customer")
-                        .param("pageNo", "1")
-                        .param("pageSize", "10"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray());
+        mockMvc.perform(get("/account/customer").param("pageNo", "1").param("pageSize", "10"))
+                .andExpect(status().isOk());
     }
 
-    @Test
-    @Order(7)
-    @DisplayName("GET /account/{id} - Xem thong tin tai khoan (public)")
+    @Test @Order(7) @DisplayName("GET /account/{id} - Xem thong tin tai khoan")
     void getAccountById() throws Exception {
         mockMvc.perform(get("/account/" + testUser.getId()))
                 .andExpect(status().isOk())

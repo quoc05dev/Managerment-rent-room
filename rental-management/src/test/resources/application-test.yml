@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=false
+    url: jdbc:h2:mem:rental_home;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=false;INIT=CREATE SCHEMA IF NOT EXISTS RENTAL_HOME\;SET SCHEMA RENTAL_HOME
     username: sa
     password:
     driver-class-name: org.h2.Driver
@@ -13,15 +13,16 @@ spring:
         dialect: org.hibernate.dialect.H2Dialect
   sql:
     init:
-      mode: always
+      mode: never
       platform: h2
   mail:
     host: localhost
     port: 25
+  activemq:
+    broker-url: vm://embedded?broker.persistent=false
   autoconfigure:
     exclude:
-      - org.springframework.boot.autoconfigure.amqp.AutoConfiguration
-      - org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration
+      - org.springframework.boot.autoconfigure.activemq.ActiveMQAutoConfiguration
 
 file:
   uploadDir: ${java.io.tmpdir}/test-upload/
@@ -29,7 +30,7 @@ file:
 
 app:
   auth:
-    tokenSecret: testSecretKeyForUnitTestingPurposesOnly1234567890abcdef1234567890abcdef
+    tokenSecret: testSecretKeyForUnitTestingPurposesOnly1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
     tokenExpirationMsec: 86400000
   cors:
     allowedOrigins: http://localhost:3000

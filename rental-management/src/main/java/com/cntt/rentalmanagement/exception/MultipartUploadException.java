@@ -1,6 +1,5 @@
 package com.cntt.rentalmanagement.exception;
 
-import com.cntt.rentalmanagement.domain.payload.response.MessageResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -10,6 +9,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Map;
 
 @RestControllerAdvice
 public class MultipartUploadException {
@@ -22,18 +22,7 @@ public class MultipartUploadException {
     @ExceptionHandler({ IllegalArgumentException.class })
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ResponseEntity<?> handleIllegalArgument(IllegalArgumentException e) {
-        return ResponseEntity.ok(MessageResponse.builder().message("Đăng nhập để sử dụng chức năng.").build());
-    }
-
-    @ExceptionHandler({ BadRequestException.class })
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<?> handleBadRequest(BadRequestException e) {
-        return ResponseEntity.ok(MessageResponse.builder().message(e.getMessage()).build());
-    }
-
-    @ExceptionHandler({ Exception.class })
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ResponseEntity<?> handleGenericException(Exception e) {
-        return ResponseEntity.ok(MessageResponse.builder().message("Đã có lỗi xảy ra. Vui lòng thử lại.").build());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("message", "Đăng nhập để sử dụng chức năng.", "errorCode", "UNAUTHORIZED"));
     }
 }

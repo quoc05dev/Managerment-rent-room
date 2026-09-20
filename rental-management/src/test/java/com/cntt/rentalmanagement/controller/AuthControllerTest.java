@@ -1,6 +1,7 @@
 package com.cntt.rentalmanagement.controller;
 
 import com.cntt.rentalmanagement.BaseIntegrationTest;
+import com.cntt.rentalmanagement.domain.enums.RoleName;
 import com.cntt.rentalmanagement.domain.payload.request.LoginRequest;
 import com.cntt.rentalmanagement.domain.payload.request.SignUpRequest;
 import org.junit.jupiter.api.*;
@@ -39,7 +40,7 @@ class AuthControllerTest extends BaseIntegrationTest {
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -53,7 +54,7 @@ class AuthControllerTest extends BaseIntegrationTest {
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -90,9 +91,11 @@ class AuthControllerTest extends BaseIntegrationTest {
     void signupSuccess() throws Exception {
         SignUpRequest signUpRequest = new SignUpRequest();
         signUpRequest.setName("New User");
-        signUpRequest.setEmail("newuser@example.com");
+        signUpRequest.setEmail("signupuser@gmail.com");
         signUpRequest.setPassword("password123");
         signUpRequest.setConfirmPassword("password123");
+        signUpRequest.setPhone("0911122233");
+        signUpRequest.setRole(RoleName.ROLE_USER);
 
         mockMvc.perform(post("/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
