@@ -27,25 +27,37 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        promoteToAdmin("dangminhquoc8@gmail.com");
+        ensureAdmin("dangminhquoc8@gmail.com", "Quoc DM", "admin123", "0900000000");
     }
 
-    private void promoteToAdmin(String email) {
-        User user = userRepository.findByEmail(email).orElse(null);
-        if (user == null) {
-            log.info("=== User {} not found, skipping admin promotion ===", email);
-            return;
-        }
-        boolean alreadyAdmin = user.getRoles().stream()
-                .anyMatch(r -> r.getName() == RoleName.ROLE_ADMIN);
-        if (alreadyAdmin) {
-            log.info("=== User {} is already ADMIN ===", email);
-            return;
-        }
+    private void ensureAdmin(String email, String name, String password, String phone) {
         Role adminRole = roleRepository.findByName(RoleName.ROLE_ADMIN)
                 .orElseThrow(() -> new IllegalArgumentException("ROLE_ADMIN not found"));
-        user.setRoles(Collections.singleton(adminRole));
-        userRepository.save(user);
-        log.info("=== User {} promoted to ADMIN ===", email);
+
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null) {
+            user = new User();
+            user.setEmail(email);
+            user.setName(name);
+            user.setPassword(passwordEncoder.encode(password));
+            user.setProvider(AuthProvider.local);
+            user.setIsConfirmed(true);
+            user.setIsLocked(false);
+            user.setPhone(phone);
+            user.setRoles(Collections.singleton(adminRole));
+            userRepository.save(user);
+            log.info("=== Admin account CREATED: {} ===", email);
+        } else {
+            boolean alreadyAdmin = user.getRoles().stream()
+                    .anyMatch(r -> r.getName() == RoleName.ROLE_ADMIN);
+            if (!alreadyAdmin) {
+                user.getRoles().clear();
+                user.setRoles(Collections.singleton(adminRole));
+                userRepository.save(user);
+                log.info("=== User {} PROMOTED to ADMIN ===", email);
+            } else {
+                log.info("=== User {} is already ADMIN ===", email);
+            }
+        }
     }
 }
