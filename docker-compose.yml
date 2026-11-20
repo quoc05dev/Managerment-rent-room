@@ -115,6 +115,10 @@ services:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD in server .env}
       GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      # Phục vụ qua host nginx tại https://quock6.click/grafana/
+      GF_SERVER_ROOT_URL: https://quock6.click/grafana/
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
     ports:
       - "127.0.0.1:3004:3000"
     volumes:
