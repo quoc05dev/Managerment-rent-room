@@ -1,0 +1,32 @@
+name: Diag
+on:
+  workflow_dispatch:
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            set +e
+            cd ~/Quoc/Managerment-rent-room
+            echo "=== compose ps ==="
+            docker compose ps
+            echo "=== grafana logs (provision) ==="
+            docker logs rental-grafana 2>&1 | grep -iE "provision|dashboard|error|warn" | tail -40
+            echo "=== prometheus targets ==="
+            curl -sS http://127.0.0.1:9090/api/v1/targets
+            echo
+            echo "=== query cpu ==="
+            curl -sS 'http://127.0.0.1:9090/api/v1/query?query=100*(1-avg(rate(node_cpu_seconds_total{mode="idle"}[5m])))'
+            echo
+            echo "=== query http ==="
+            curl -sS 'http://127.0.0.1:9090/api/v1/query?query=sum(rate(http_server_requests_seconds_count{application="rental-management"}[5m]))'
+            echo
+            echo "=== grafana api (local) ==="
+            curl -sS -u admin:"$(grep '^GRAFANA_ADMIN_PASSWORD=' .env | cut -d= -f2)" http://127.0.0.1:3004/api/health
+            echo
+            curl -sS -u admin:"$(grep '^GRAFANA_ADMIN_PASSWORD=' .env | cut -d= -f2)" http://127.0.0.1:3004/api/search
