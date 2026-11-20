@@ -13,20 +13,14 @@ jobs:
           script: |
             set +e
             cd ~/Quoc/Managerment-rent-room
-            echo "=== compose ps ==="
-            docker compose ps
-            echo "=== grafana logs (provision) ==="
-            docker logs rental-grafana 2>&1 | grep -iE "provision|dashboard|error|warn" | tail -40
-            echo "=== prometheus targets ==="
-            curl -sS http://127.0.0.1:9090/api/v1/targets
-            echo
-            echo "=== query cpu ==="
-            curl -sS 'http://127.0.0.1:9090/api/v1/query?query=100*(1-avg(rate(node_cpu_seconds_total{mode="idle"}[5m])))'
-            echo
-            echo "=== query http ==="
-            curl -sS 'http://127.0.0.1:9090/api/v1/query?query=sum(rate(http_server_requests_seconds_count{application="rental-management"}[5m]))'
-            echo
-            echo "=== grafana api (local) ==="
-            curl -sS -u admin:"$(grep '^GRAFANA_ADMIN_PASSWORD=' .env | cut -d= -f2)" http://127.0.0.1:3004/api/health
-            echo
-            curl -sS -u admin:"$(grep '^GRAFANA_ADMIN_PASSWORD=' .env | cut -d= -f2)" http://127.0.0.1:3004/api/search
+            echo "=== metric names present ==="
+            curl -sS -G --data-urlencode 'query=node_cpu_seconds_total' http://127.0.0.1:9090/api/v1/query | head -c 300; echo
+            echo "=== http metric names ==="
+            curl -sS http://127.0.0.1:9090/api/v1/label/__name__/values | tr ',' '\n' | grep -iE 'http_server_requests|jvm_memory_used|node_cpu|node_memory' | head
+            echo "=== sample http metric with labels ==="
+            curl -sS -G --data-urlencode 'query=http_server_requests_seconds_count' http://127.0.0.1:9090/api/v1/query | head -c 500; echo
+            echo "=== sample jvm metric ==="
+            curl -sS -G --data-urlencode 'query=jvm_memory_used_bytes{area="heap"}' http://127.0.0.1:9090/api/v1/query | head -c 500; echo
+            echo "=== grafana dashboard json panels ==="
+            PW=$(grep '^GRAFANA_ADMIN_PASSWORD=' .env | cut -d= -f2)
+            curl -sS -u "admin:$PW" http://127.0.0.1:3004/api/dashboards/uid/rental-overview | head -c 200; echo
