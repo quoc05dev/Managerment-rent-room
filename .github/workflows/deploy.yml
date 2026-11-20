@@ -63,7 +63,7 @@ jobs:
             docker compose up -d --build --remove-orphans
             docker image prune -f
 
-            echo "=== [3/5] Configure host nginx (Cloudflare Full Strict) ==="
+            echo "=== [3/5] Configure host nginx (Cloudflare Flexible temporary mode) ==="
             if [ ! -f /etc/nginx/ssl/${DOMAIN}.pem ] || [ ! -f /etc/nginx/ssl/${DOMAIN}.key ]; then
               echo "ERROR: thiếu Cloudflare Origin Certificate:"
               echo "  /etc/nginx/ssl/${DOMAIN}.pem"
@@ -83,10 +83,10 @@ jobs:
             # cùng nginx host không bị gián đoạn. reload fail khi chưa từng chạy.
             sudo systemctl reload nginx || sudo systemctl restart nginx
 
-            echo "=== [4/5] Smoke test through host nginx ==="
+            echo "=== [4/5] Smoke test through host HTTP nginx (Flexible origin) ==="
             ok=0
             for i in $(seq 1 36); do
-              if curl -fsSk --resolve ${DOMAIN}:443:127.0.0.1 https://${DOMAIN}/health >/dev/null; then
+              if curl -fsS --resolve ${DOMAIN}:80:127.0.0.1 http://${DOMAIN}/health >/dev/null; then
                 ok=1; break
               fi
               sleep 5
