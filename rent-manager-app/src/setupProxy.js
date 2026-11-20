@@ -26,7 +26,8 @@ const API_ROOTS = [
   '/document',
   '/view-file',
   '/image',
-  '/oauth2',
+  '/oauth2/authorize',
+  '/oauth2/callback',
 ];
 
 // "/admin" and "/rentaler" are both UI prefixes and API prefixes, so only these
