@@ -119,6 +119,8 @@ services:
       # Phục vụ qua host nginx tại https://quock6.click/grafana/
       GF_SERVER_ROOT_URL: https://quock6.click/grafana/
       GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+      # Mở Grafana là thấy luôn dashboard tổng quan thay vì trang trống.
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/overview.json
     ports:
       - "127.0.0.1:3004:3000"
     volumes:
