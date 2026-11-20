@@ -79,7 +79,9 @@ jobs:
             fi
             sudo nginx -t
             sudo systemctl enable nginx
-            sudo systemctl restart nginx
+            # reload: áp dụng config mới không kill worker -> site khác trên
+            # cùng nginx host không bị gián đoạn. reload fail khi chưa từng chạy.
+            sudo systemctl reload nginx || sudo systemctl restart nginx
 
             echo "=== [4/5] Smoke test through host nginx ==="
             ok=0
