@@ -61,6 +61,9 @@ jobs:
             # Không 'down' + không 'prune -af' trước build: giữ image cũ để rollback,
             # compose tự recreate service khi config đổi.
             docker compose up -d --build --remove-orphans
+            # Host nginx container resolves backend's Docker IP at startup; refresh it
+            # whenever a backend rebuild/recreate may change that IP.
+            docker compose up -d --force-recreate frontend
             docker image prune -f
 
             echo "=== [3/5] Configure host nginx (Cloudflare Flexible temporary mode) ==="
