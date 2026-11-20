@@ -4,127 +4,97 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
+# Không cho 2 lần deploy chạy chồng lên nhau trên cùng VPS.
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
-    name: Build
+    name: Build images
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build backend (verify Dockerfile)
-        run: |
-          cd rental-management
-          docker build -t rental-backend:test .
+      # docker build vừa là "compile gate" (Maven/npm build bên trong Dockerfile).
+      # Không upload artifact: VPS tự build lại từ source khi deploy.
+      - name: Build backend image
+        run: docker build -t rental-backend:ci ./rental-management
 
-      - name: Build frontend (verify Dockerfile)
-        run: |
-          cd rent-manager-app
-          docker build -t rental-frontend:test .
-
-      - name: Save images
-        run: |
-          docker save rental-backend:test | gzip > /tmp/backend.tar.gz
-          docker save rental-frontend:test | gzip > /tmp/frontend.tar.gz
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: docker-images
-          path: /tmp/*.tar.gz
-          retention-days: 1
-
-  test:
-    name: Test
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-          cache: npm
-          cache-dependency-path: rent-manager-app/package-lock.json
-
-      - name: Install frontend dependencies
-        run: |
-          cd rent-manager-app
-          npm ci
-
-      - name: Run frontend lint
-        run: |
-          cd rent-manager-app
-          npx eslint src/ --max-warnings=999 || true
-          echo "Lint completed"
-
-      - name: Run frontend build test
-        env:
-          CI: false
-        run: |
-          cd rent-manager-app
-          npm run build
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          java-version: "11"
-          distribution: temurin
-          cache: maven
-
-      - name: Run backend compile
-        continue-on-error: true
-        run: |
-          cd rental-management
-          ./mvnw compile -B
+      - name: Build frontend image
+        run: docker build -t rental-frontend:ci ./rent-manager-app
 
   deploy:
     name: Deploy
-    needs: [build, test]
+    needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      DOMAIN: quock6.click
     steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: docker-images
-          path: /tmp
-
-      - name: Upload images to server and deploy
+      - name: Deploy over SSH
         uses: appleboy/ssh-action@v1
         env:
-          SERVER_HOST: ${{ secrets.SERVER_HOST }}
-          SERVER_USER: ${{ secrets.SERVER_USER }}
+          DOMAIN: ${{ env.DOMAIN }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
+          envs: DOMAIN
+          script_stop: true
+          command_timeout: 40m
           script: |
+            set -e
             cd ~/Quoc/Managerment-rent-room
 
-            echo "=== [1/4] Pulling latest code ==="
-            git pull origin main
+            echo "=== [1/5] Sync code to origin/main ==="
+            git fetch origin
+            git checkout -f main
+            git reset --hard origin/main
 
-            echo "=== [2/4] Stopping old containers ==="
-            docker compose down --remove-orphans
+            echo "=== [2/5] Build & start containers (no downtime wipe) ==="
+            # Không 'down' + không 'prune -af' trước build: giữ image cũ để rollback,
+            # compose tự recreate service khi config đổi.
+            docker compose up -d --build --remove-orphans
+            docker image prune -f
 
-            echo "=== [3/4] Pruning old images and build cache ==="
-            docker image prune -af
-            docker builder prune -af --filter "until=24h"
-
-            echo "=== [4/4] Building and starting containers ==="
-            docker compose up -d --build
-
-            echo "=== [5/5] Configuring and starting host nginx ==="
-            sudo apt-get install -y nginx 2>/dev/null || true
+            echo "=== [3/5] Configure host nginx (Cloudflare Full Strict) ==="
+            if [ ! -f /etc/nginx/ssl/${DOMAIN}.pem ] || [ ! -f /etc/nginx/ssl/${DOMAIN}.key ]; then
+              echo "ERROR: thiếu Cloudflare Origin Certificate:"
+              echo "  /etc/nginx/ssl/${DOMAIN}.pem"
+              echo "  /etc/nginx/ssl/${DOMAIN}.key"
+              exit 1
+            fi
+            command -v nginx >/dev/null 2>&1 || { sudo apt-get update && sudo apt-get install -y nginx; }
             sudo mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
-            sudo cp ~/Quoc/Managerment-rent-room/deploy/quock6.click.conf /etc/nginx/sites-available/quock6.click.conf
-            sudo ln -sf /etc/nginx/sites-available/quock6.click.conf /etc/nginx/sites-enabled/quock6.click.conf
+            sudo cp deploy/${DOMAIN}.conf /etc/nginx/sites-available/${DOMAIN}.conf
+            sudo ln -sf /etc/nginx/sites-available/${DOMAIN}.conf /etc/nginx/sites-enabled/${DOMAIN}.conf
             if ! grep -q "sites-enabled" /etc/nginx/nginx.conf; then
               echo 'include /etc/nginx/sites-enabled/*;' | sudo tee -a /etc/nginx/nginx.conf > /dev/null
             fi
             sudo nginx -t
             sudo systemctl enable nginx
             sudo systemctl restart nginx
-            echo "=== Deploy completed at $(date) ==="
+
+            echo "=== [4/5] Smoke test through host nginx ==="
+            ok=0
+            for i in $(seq 1 36); do
+              if curl -fsSk --resolve ${DOMAIN}:443:127.0.0.1 https://${DOMAIN}/health >/dev/null; then
+                ok=1; break
+              fi
+              sleep 5
+            done
+
+            echo "=== [5/5] Status ==="
+            docker compose ps
+            if [ "$ok" != "1" ]; then
+              echo "Smoke test FAILED — backend/db chưa sẵn sàng. Log backend:"
+              docker compose logs --tail=80 backend
+              exit 1
+            fi
+            echo "=== Deploy OK at $(date) ==="

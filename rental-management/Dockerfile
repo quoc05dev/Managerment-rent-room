@@ -9,7 +9,7 @@ RUN mvn package -DskipTests -B
 # ===== RUN STAGE =====
 FROM eclipse-temurin:11-jre
 WORKDIR /app
-RUN apt-get update && apt-get install -y libreoffice-core && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y curl libreoffice-core && rm -rf /var/lib/apt/lists/*
 COPY --from=build /app/target/*.jar app.jar
 RUN mkdir -p /hdd/data/photographer/upload /hdd/data/photographer/tmp
 EXPOSE 8080

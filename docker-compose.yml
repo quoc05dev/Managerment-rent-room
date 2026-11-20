@@ -1,19 +1,18 @@
-version: "3.8"
-
 services:
   mysql:
     image: mysql:8.0
     container_name: rental-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-password}
       MYSQL_DATABASE: rental_home
+    # Chỉ bind localhost: DB không lộ ra Internet. Dùng SSH tunnel nếu cần debug.
     ports:
-      - "3316:3306"
+      - "127.0.0.1:3316:3306"
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-ppassword"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-password}"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -23,12 +22,13 @@ services:
     image: rmohr/activemq:5.15.9
     container_name: rental-activemq
     restart: unless-stopped
+    # Chỉ bind localhost: không publish broker/webconsole ra Internet.
     ports:
-      - "61617:61616"
-      - "8162:8161"
+      - "127.0.0.1:61617:61616"
+      - "127.0.0.1:8162:8161"
     environment:
-      ACTIVEMQ_ADMIN_LOGIN: admin
-      ACTIVEMQ_ADMIN_PASSWORD: admin
+      ACTIVEMQ_ADMIN_LOGIN: ${ACTIVEMQ_ADMIN_LOGIN:-admin}
+      ACTIVEMQ_ADMIN_PASSWORD: ${ACTIVEMQ_ADMIN_PASSWORD:-admin}
     volumes:
       - activemq-data:/data/activemq
       - activemq-log:/var/log/activemq
@@ -38,22 +38,28 @@ services:
       context: ./rental-management
       dockerfile: Dockerfile
     container_name: rental-backend
-    restart: on-failure
+    restart: unless-stopped
     depends_on:
       mysql:
         condition: service_healthy
       activemq:
         condition: service_started
     ports:
-      - "8081:8080"
+      - "127.0.0.1:8081:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/rental_home?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&useLegacyDatetimeCode=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-password}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_ACTIVEMQ_BROKER_URL: tcp://activemq:61616
-      APP_CORS_ALLOWED_ORIGINS: http://localhost:3000,http://localhost:8080,https://quock6.click,http://quock6.click
-      APP_OAUTH2_AUTHORIZED_REDIRECT_URIS: http://localhost:3000/oauth2/redirect,https://quock6.click/oauth2/redirect,http://quock6.click/oauth2/redirect
+      APP_CORS_ALLOWED_ORIGINS: http://localhost:3000,http://localhost:8080,https://quock6.click
+      APP_OAUTH2_AUTHORIZED_REDIRECT_URIS: http://localhost:3000/oauth2/redirect,https://quock6.click/oauth2/redirect
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
     volumes:
       - upload-data:/hdd/data/photographer
 
@@ -64,9 +70,10 @@ services:
     container_name: rental-frontend
     restart: unless-stopped
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     ports:
-      - "3100:80"
+      - "127.0.0.1:3100:80"
 
 volumes:
   mysql-data:

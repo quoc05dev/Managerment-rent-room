@@ -3,6 +3,8 @@ package com.cntt.rentalmanagement.controller;
 import com.cntt.rentalmanagement.repository.UserRepository;
 import com.cntt.rentalmanagement.repository.RoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,19 +26,21 @@ public class HealthController {
     private DataSource dataSource;
 
     @GetMapping("/health")
-    public Map<String, Object> health() {
+    public ResponseEntity<Map<String, Object>> health() {
         Map<String, Object> result = new HashMap<>();
-        result.put("status", "UP");
+        boolean dbOk = false;
 
         try {
             Connection conn = dataSource.getConnection();
             result.put("database", "CONNECTED");
-            result.put("databaseUrl", conn.getMetaData().getURL());
             conn.close();
+            dbOk = true;
         } catch (Exception e) {
             result.put("database", "ERROR");
             result.put("databaseError", e.getMessage());
         }
+
+        result.put("status", dbOk ? "UP" : "DOWN");
 
         try {
             result.put("totalUsers", userRepository.count());
@@ -50,6 +54,6 @@ public class HealthController {
             result.put("roleCountError", e.getMessage());
         }
 
-        return result;
+        return ResponseEntity.status(dbOk ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE).body(result);
     }
 }

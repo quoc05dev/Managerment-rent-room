@@ -1,0 +1,14 @@
+# Secrets — override bằng .env trên server (docker compose tự đọc)
+.env
+.env.local
+.env.*.local
+
+# Build output
+rental-management/target/
+rent-manager-app/build/
+rent-manager-app/node_modules/
+rental-management/node_modules/
+
+# IDE
+.idea/
+*.iml
