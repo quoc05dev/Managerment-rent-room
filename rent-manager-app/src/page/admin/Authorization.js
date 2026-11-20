@@ -1,4 +1,4 @@
-import { Navigate, useParams } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { getAccountById, setAuthorization } from "../../services/fetch/ApiUtils";
 import { useEffect, useState } from "react";
 import SidebarNav from "./SidebarNav";
@@ -70,10 +70,10 @@ const Authorization = (props) => {
         <div className="wrapper">
             <nav id="sidebar" className="sidebar js-sidebar">
                 <div className="sidebar-content js-simplebar">
-                    <a className="sidebar-brand" href="index.html">
-                        <span className="align-middle">RENTALER PRO</span>
-                    </a>
-                    <SidebarNav />
+                    <Link className="sidebar-brand" to="/admin">
+                        <span className="align-middle">ADMIN PRO</span>
+                    </Link>
+                    <SidebarNav currentUser={currentUser} onLogout={onLogout} />
                 </div>
             </nav>
 

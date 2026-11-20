@@ -19,6 +19,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import Signup from "./page/signup/Signup";
 import OAuth2RedirectHandler from './oauth2/OAuth2RedirectHandler';
 import NotFound from './common/NotFound';
+import { SidebarProvider } from './common/SidebarContext';
 import DashboardRentaler from './page/rentaler/DashboardRentaler';
 import LoginRentaler from './page/login/LoginRentaler';
 import LoginAdmin from './page/login/LoginAdmin';
@@ -189,7 +190,8 @@ function App() {
   console.log({ authenticated, username, currentUser, role, loading });
   return (
     <>
-      <Router>
+    <Router>
+      <SidebarProvider>
         <Routes>
           <Route exact path="/" element={<Main authenticated={authenticated} currentUser={currentUser} onLogout={handleLogout} />} />
           <Route exact path="/rental-home" element={<RentalHome authenticated={authenticated} currentUser={currentUser} onLogout={handleLogout} />} />
@@ -240,7 +242,8 @@ function App() {
           <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </Router>
+      </SidebarProvider>
+    </Router>
 
 
       <ToastContainer

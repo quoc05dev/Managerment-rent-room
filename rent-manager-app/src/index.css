@@ -15,6 +15,8 @@ code {
 /* Sidebar theme - match green accent #2eca6a */
 #sidebar {
   background-color: #1a2e3b !important;
+  min-width: 280px !important;
+  max-width: 280px !important;
 }
 
 #sidebar .sidebar-content {
@@ -24,6 +26,7 @@ code {
 #sidebar .sidebar-link {
   color: #b8c5d0 !important;
   border-left: 3px solid transparent;
+  white-space: nowrap !important;
 }
 
 #sidebar .sidebar-link:hover {
@@ -44,4 +47,191 @@ code {
   font-size: 0.75rem;
   letter-spacing: 1px;
   padding: 15px 20px 8px;
+}
+
+/* Sidebar width must stay in sync with the 280px above */
+body.app-sidebar-collapsed #sidebar,
+body.app-sidebar-collapsed #sidebar.collapsed {
+  margin-left: -280px !important;
+}
+
+body.app-sidebar-collapsed #sidebar [data-simplebar] {
+  width: 280px !important;
+}
+
+#sidebar [data-simplebar] {
+  width: 280px !important;
+}
+
+@media (max-width: 991.98px) {
+  #sidebar {
+    margin-left: -280px !important;
+  }
+
+  body.app-sidebar-collapsed #sidebar,
+  body.app-sidebar-collapsed #sidebar.collapsed {
+    margin-left: 0 !important;
+  }
+}
+
+/* Account block pinned to the bottom of the sidebar */
+#sidebar .sidebar-account {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: auto;
+  padding: 10px 0;
+}
+
+#sidebar .sidebar-account-toggle {
+  align-items: center;
+  color: #b8c5d0;
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+  padding: 8px 20px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+#sidebar .sidebar-account-toggle:hover {
+  background-color: rgba(46, 202, 106, 0.1);
+  color: #ffffff;
+}
+
+#sidebar .sidebar-account-avatar {
+  border-radius: 50%;
+  flex: 0 0 34px;
+  height: 34px;
+  object-fit: cover;
+  width: 34px;
+}
+
+#sidebar .sidebar-account-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+#sidebar .sidebar-account-name {
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#sidebar .sidebar-account-role {
+  color: #7a8fa3;
+  font-size: 0.72rem;
+}
+
+#sidebar .sidebar-account-chevron {
+  flex: 0 0 auto;
+  font-size: 0.8rem;
+}
+
+#sidebar .sidebar-account-menu {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+}
+
+#sidebar .sidebar-account-menu .sidebar-link {
+  font-size: 0.875rem;
+  padding: 0.5rem 1.625rem 0.5rem 2.5rem;
+}
+
+#sidebar .sidebar-account-menu .sidebar-link i {
+  margin-right: 0.75rem;
+}
+
+#sidebar .sidebar-account-menu .sidebar-logout {
+  color: #ff8a80 !important;
+}
+
+#sidebar .sidebar-account-menu .sidebar-logout:hover {
+  background-color: rgba(255, 82, 82, 0.12) !important;
+  border-left-color: #ff5252;
+  color: #ffffff !important;
+}
+
+/* Management tables: airy columns, a header that actually reads as a header,
+   and a single line per cell. Applies to every #datatables-buttons table
+   (account, room, contract, maintenance, request, dashboard, room-hired).
+   Markup is identical in all of them, so the scroll container is set here
+   instead of wrapping each table in JSX. */
+
+#datatables-buttons_wrapper .dt-row > .col-sm-12 {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+#datatables-buttons {
+  table-layout: auto !important;
+  width: 100% !important;
+  margin-bottom: 0 !important;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* the template sets html { font-size: 14px }, so 1rem = 14px here */
+#datatables-buttons thead th,
+#datatables-buttons tbody td {
+  white-space: nowrap;
+  vertical-align: middle;
+  font-size: 1rem;
+  line-height: 1.5;
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid #eef0f3;
+  border-left: 1px solid #eef0f3;
+}
+
+/* the vertical rules would double up against the cell to their left */
+#datatables-buttons thead th:first-child,
+#datatables-buttons tbody td:first-child {
+  border-left: 0;
+  width: 40%;
+}
+
+#datatables-buttons thead th {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #5a6472;
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #e6e9ee;
+}
+
+#datatables-buttons tbody tr:nth-of-type(odd) > td {
+  background-color: #ffffff;
+}
+
+#datatables-buttons tbody tr:nth-of-type(even) > td {
+  background-color: #fafbfc;
+}
+
+#datatables-buttons tbody tr:hover > td {
+  background-color: #f0f4f8;
+}
+
+#datatables-buttons .btn {
+  white-space: nowrap;
+}
+
+@media (max-width: 767.98px) {
+  #datatables-buttons {
+    min-width: 720px;
+  }
+
+  #datatables-buttons thead th,
+  #datatables-buttons tbody td {
+    padding: 0.6rem 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  #datatables-buttons thead th {
+    font-size: 0.78rem;
+  }
 }

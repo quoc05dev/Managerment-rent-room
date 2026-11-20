@@ -3,7 +3,7 @@ import SidebarNav from './SidebarNav';
 import Nav from './Nav';
 import Pagination from './Pagnation';
 import { toast } from 'react-toastify';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { approveRoomOfAdmin, disableRoom, getAllRoomOfAdmin, removeRoomOfAdmin } from '../../services/fetch/ApiUtils';
 import ModalRoomDetails from './modal/ModalRoomDetail';
 
@@ -89,10 +89,10 @@ function RoomManagement(props) {
             <div className="wrapper">
                 <nav id="sidebar" className="sidebar js-sidebar">
                     <div className="sidebar-content js-simplebar">
-                        <a className="sidebar-brand" href="index.html">
+                        <Link className="sidebar-brand" to="/admin">
                             <span className="align-middle">ADMIN PRO</span>
-                        </a>
-                        <SidebarNav />
+                        </Link>
+                        <SidebarNav currentUser={currentUser} onLogout={onLogout} />
                     </div>
                 </nav>
 

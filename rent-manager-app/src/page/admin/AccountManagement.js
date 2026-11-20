@@ -3,7 +3,7 @@ import SidebarNav from './SidebarNav';
 import Nav from './Nav';
 import Pagination from './Pagnation';
 import { toast } from 'react-toastify';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { disableRoom, getAllAccpuntOfAdmin, lockedAccount } from '../../services/fetch/ApiUtils';
 
 function AccountManagement(props) {
@@ -70,10 +70,10 @@ function AccountManagement(props) {
             <div className="wrapper">
                 <nav id="sidebar" className="sidebar js-sidebar">
                     <div className="sidebar-content js-simplebar">
-                        <a className="sidebar-brand" href="index.html">
+                        <Link className="sidebar-brand" to="/admin">
                             <span className="align-middle">ADMIN PRO</span>
-                        </a>
-                        <SidebarNav />
+                        </Link>
+                        <SidebarNav currentUser={currentUser} onLogout={onLogout} />
                     </div>
                 </nav>
 
@@ -98,11 +98,11 @@ function AccountManagement(props) {
                                 </div></div></div><div className="row dt-row"><div className="col-sm-12"><table id="datatables-buttons" className="table table-striped dataTable no-footer dtr-inline" style={{ width: "100%" }} aria-describedby="datatables-buttons_info">
                                     <thead>
                                         <tr>
-                                            <th className="sorting sorting_asc" tabindex="0" aria-controls="datatables-buttons" rowspan="1" colspan="1" style={{ width: "224px" }}  >Họ và tên</th>
-                                            <th className="sorting" tabindex="0" aria-controls="datatables-buttons" rowspan="1" colspan="1" style={{ width: "290px" }} >Email</th>
-                                            <th className="sorting" tabindex="0" aria-controls="datatables-buttons" rowspan="1" colspan="1" style={{ width: "166px" }} >Số điện thoại</th>
-                                            <th className="sorting" tabindex="0" aria-controls="datatables-buttons" rowspan="1" colspan="1" style={{ width: "142px" }} >Trạng Thái</th>
-                                            <th className="sorting" tabindex="0" aria-controls="datatables-buttons" rowspan="1" colspan="1" style={{ width: "134px" }} >Chế độ</th></tr>
+                                            <th className="sorting sorting_asc" tabindex="0" aria-controls="datatables-buttons" rowspan="1" colspan="1">Họ và tên</th>
+                                            <th className="sorting" tabindex="0" aria-controls="datatables-buttons" rowspan="1" colspan="1">Email</th>
+                                            <th className="sorting" tabindex="0" aria-controls="datatables-buttons" rowspan="1" colspan="1">Số điện thoại</th>
+                                            <th className="sorting" tabindex="0" aria-controls="datatables-buttons" rowspan="1" colspan="1">Trạng Thái</th>
+                                            <th className="sorting" tabindex="0" aria-controls="datatables-buttons" rowspan="1" colspan="1">Chế độ</th></tr>
                                     </thead>
                                     <tbody>
                                         {tableData.map((item) => (

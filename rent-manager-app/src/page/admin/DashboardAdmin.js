@@ -103,10 +103,10 @@ const DashboardAdmin = (props) => {
     <div className="wrapper">
       <nav id="sidebar" className="sidebar js-sidebar">
         <div className="sidebar-content js-simplebar">
-          <a className="sidebar-brand" href="index.html">
-            <span className="align-middle">ADMIN PRO</span>
-          </a>
-          <SidebarNav />
+                    <Link className="sidebar-brand" to="/admin">
+                        <span className="align-middle">ADMIN PRO</span>
+                    </Link>
+                    <SidebarNav currentUser={currentUser} onLogout={onLogout} />
         </div>
       </nav>
 

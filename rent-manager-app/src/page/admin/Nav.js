@@ -1,19 +1,34 @@
 import React from "react"
+import { useSidebar } from '../../common/SidebarContext';
 
 const Nav = (props) => {
-  const {currentUser, onLogout} = props;
+  const { currentUser, onLogout } = props;
+  const { collapsed, toggleSidebar, toggleAccount } = useSidebar();
+
+  const handleHamburger = (event) => {
+    event.preventDefault();
+    toggleSidebar();
+  };
+
+  const handleDots = (event) => {
+    event.preventDefault();
+    if (collapsed) {
+      toggleSidebar();
+    }
+    toggleAccount();
+  };
 
   return (
     <nav className="navbar navbar-expand navbar-light navbar-bg">
-      <a className="sidebar-toggle js-sidebar-toggle">
+      <a className="sidebar-toggle" onClick={handleHamburger}>
         <i className="hamburger align-self-center"></i>
       </a>
 
       <div className="navbar-collapse collapse">
         <ul className="navbar-nav navbar-align">
           <li className="nav-item dropdown">
-            <a className="nav-icon dropdown-toggle d-inline-block d-sm-none" href="#" data-bs-toggle="dropdown">
-              <i className="align-middle" data-feather="settings"></i>
+            <a className="nav-icon dropdown-toggle d-inline-block" href="#" onClick={handleDots}>
+              <i className="align-middle" data-feather="more-vertical"></i>
             </a>
 
             <a className="nav-link dropdown-toggle d-none d-sm-inline-block" href="#" data-bs-toggle="dropdown">
