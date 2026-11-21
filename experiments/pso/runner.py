@@ -242,12 +242,12 @@ def init_particle(cfg):
 
 # ---------- Áp cấu hình + đo ----------
 
-def apply_config(vec):
+def apply_config(vec, base_url):
     for n, (cpus, mem_mb) in vec.items():
         sh(["docker", "update", f"--cpus={cpus}", f"--memory={int(mem_mb)}m", container_name(n)])
     # JVM chỉ đọc lại MaxRAMPercentage khi khởi động.
     sh(["docker", "restart", container_name("backend")])
-    return wait_health("http://127.0.0.1:8085")
+    return wait_health(base_url)
 
 
 def run_k6(cfg):
@@ -298,7 +298,7 @@ def evaluate(vec, cfg, dry=False):
         return metrics
 
     names = cfg["resources"]["containers"]
-    if not apply_config(vec):
+    if not apply_config(vec, cfg["load"]["base_url"]):
         return {"error": "backend khong healthy sau khi ap cau hinh",
                 "p95_ms": float("inf"), "error_rate": 1.0,
                 "oom": 0, "oom_kill": 0, "restarts": 0, "healthy": False,

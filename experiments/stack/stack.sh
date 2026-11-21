@@ -8,7 +8,7 @@ MODE="${1:-status}"
 COMPOSE_FILE="experiments/stack/docker-compose.exp.yml"
 COMPOSE=(docker compose -p rental-exp -f "$COMPOSE_FILE")
 EXP_MYSQL_PASSWORD="${EXP_MYSQL_PASSWORD:-exp_password}"
-BACKEND_URL="${BACKEND_URL:-http://127.0.0.1:8085}"
+BACKEND_URL="${BACKEND_URL:-http://127.0.0.1:18085}"
 export EXP_MYSQL_PASSWORD
 
 mysql_exp() {
@@ -41,6 +41,7 @@ case "$MODE" in
     echo "== cgroup controllers =="; cat /sys/fs/cgroup/cgroup.controllers
     echo "== cgroup subtree =="; cat /sys/fs/cgroup/cgroup.subtree_control
     echo "== cgroup parent cua rental-backend =="; docker inspect rental-backend --format '{{.HostConfig.CgroupParent}}' 2>/dev/null || true
+    echo "== ports dang dung =="; ss -ltn | grep -E ':(18085|3317|8083|8085)\b' || true
     ;;
   up)
     "${COMPOSE[@]}" up -d --remove-orphans

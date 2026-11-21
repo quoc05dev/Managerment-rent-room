@@ -21,7 +21,7 @@ resources:
 
 load:
   # Gọi trực tiếp backend để loại nhiễu Cloudflare/nginx; stack clone dùng port riêng.
-  base_url: "http://127.0.0.1:8085"
+  base_url: "http://127.0.0.1:18085"
   # TODO(P2): đặt bằng 70% RPS bền vững đo được từ capacity test.
   target_rps: 20
   warmup_seconds: 60
