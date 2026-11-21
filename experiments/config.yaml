@@ -22,8 +22,8 @@ load:
   rampdown_seconds: 20
   endpoints:
     - "/health"
-    - "/room?title=&pageNo=0&pageSize=10"
     - "/room/rent-home"
+    - "/room/1/rentaler?pageNo=0&pageSize=10"
 
 search_space:
   cpus: { min: 0.5, max: 4.0, step: 0.25 }

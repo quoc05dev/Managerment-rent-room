@@ -42,6 +42,11 @@ for c in rental-backend rental-mysql rental-activemq rental-frontend \
   docker inspect "$c" --format '{{.Name}} nanocpus={{.HostConfig.NanoCpus}} mem_limit={{.HostConfig.Memory}} restart_count={{.RestartCount}} oom_killed={{.State.OOMKilled}}' 2>/dev/null || true
 done
 
+section "Image ID cua container dang chay"
+for c in rental-backend rental-frontend; do
+  docker inspect "$c" --format '{{.Name}} image_id={{.Image}} config_image={{.Config.Image}}' 2>/dev/null || true
+done
+
 section "Phien ban runtime"
 docker exec rental-backend java -version 2>&1 | head -3 || true
 docker exec rental-backend sh -c 'echo JAVA_TOOL_OPTIONS=${JAVA_TOOL_OPTIONS:-<unset>}; echo JAVA_OPTS=${JAVA_OPTS:-<unset>}' 2>/dev/null || true

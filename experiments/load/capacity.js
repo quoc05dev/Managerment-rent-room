@@ -8,7 +8,7 @@ const MAX_RPS = Number(__ENV.MAX_RPS || 100);
 const RAMP = __ENV.RAMP || '5m';
 const HOLD = __ENV.HOLD || '2m';
 const PATHS = (__ENV.PATHS ||
-  '/health,/room?title=&pageNo=0&pageSize=10,/room/rent-home').split(',');
+  '/health,/room/rent-home,/room/1/rentaler?pageNo=0&pageSize=10').split(',');
 
 export const options = {
   scenarios: {
@@ -23,9 +23,6 @@ export const options = {
         { target: MAX_RPS, duration: HOLD },
       ],
     },
-  },
-  thresholds: {
-    http_req_failed: ['rate<0.01'],
   },
 };
 

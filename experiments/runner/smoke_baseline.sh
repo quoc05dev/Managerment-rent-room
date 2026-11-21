@@ -21,11 +21,13 @@ if ! curl -fsS --max-time 10 "$BASE_URL/health"; then
 fi
 echo
 
-echo "== Lay mau docker stats moi 2s =="
+echo "== Lay mau docker stats moi 2s (chi container rental-*) =="
 (
   while true; do
     printf '%s,' "$(date -Is)"
-    docker stats --no-stream --format '{{.Name}},{{.CPUPerc}},{{.MemUsage}},{{.MemPerc}}' | tr '\n' ';'
+    docker stats --no-stream --format '{{.Name}},{{.CPUPerc}},{{.MemUsage}},{{.MemPerc}}' \
+      rental-backend rental-mysql rental-activemq rental-frontend \
+      rental-prometheus rental-grafana rental-node-exporter 2>/dev/null | tr '\n' ';'
     echo
     sleep 2
   done
@@ -33,7 +35,9 @@ echo "== Lay mau docker stats moi 2s =="
 SAMPLER=$!
 
 echo "== k6: ${RPS} rps trong ${DURATION} =="
+# --user: ghi duoc vao thu muc mount (container mac dinh khong phai root).
 docker run --rm --network host -i \
+  --user "$(id -u):$(id -g)" \
   -e BASE_URL="$BASE_URL" -e RPS="$RPS" -e DURATION="$DURATION" \
   -v "$(pwd)/${OUT_DIR}:/out" \
   grafana/k6 run - < experiments/load/smoke.js 2>&1 | tee "${OUT}.k6.log"
