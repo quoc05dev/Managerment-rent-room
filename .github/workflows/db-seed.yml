@@ -8,11 +8,11 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "inspect | seed | clean"
+        description: "inspect | check | seed | clean"
         required: true
         default: inspect
         type: choice
-        options: [inspect, seed, clean]
+        options: [inspect, check, seed, clean]
       confirm:
         description: 'Gõ "yes" để thực sự thay đổi dữ liệu'
         required: false
@@ -56,6 +56,15 @@ jobs:
                   mysql_run -e "SHOW CREATE TABLE rental_home.$t\G"
                   echo "rows: $(mysql_run -N -e "SELECT COUNT(*) FROM rental_home.$t;")"
                 done
+                ;;
+              check)
+                for u in "/health" "/room/rent-home?pageNo=0&pageSize=10" "/room/1000001/rentaler?pageNo=0&pageSize=10" "/room/1000002/rentaler?pageNo=0&pageSize=10"; do
+                  for i in 1 2 3 4 5; do
+                    printf '%s #%s -> ' "$u" "$i"
+                    curl -s -o /dev/null -w '%{http_code} %{time_total}s\n' "http://127.0.0.1:8083$u"
+                  done
+                done
+                docker stats --no-stream --format '{{.Name}} {{.CPUPerc}} {{.MemUsage}}' | grep rental-
                 ;;
               seed|clean)
                 if [ "$CONFIRM" != "yes" ]; then
