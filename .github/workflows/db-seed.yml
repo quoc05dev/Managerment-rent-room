@@ -44,7 +44,7 @@ jobs:
             PW=$(docker inspect rental-mysql --format '{{range .Config.Env}}{{println .}}{{end}}' \
                  | grep '^MYSQL_ROOT_PASSWORD=' | cut -d= -f2-)
             [ -n "$PW" ] || { echo "Không đọc được MYSQL_ROOT_PASSWORD từ container"; exit 1; }
-            mysql_run() { docker exec -e MYSQL_PWD="$PW" -i rental-mysql mysql -uroot "$@"; }
+            mysql_run() { docker exec -e MYSQL_PWD="$PW" -i rental-mysql mysql -uroot --default-character-set=utf8mb4 "$@"; }
             echo "env keys: $(cut -d= -f1 .env | tr '\n' ' ')"
 
             case "$MODE" in
@@ -69,6 +69,11 @@ jobs:
                 mysql_run rental_home < "$FILE"
                 echo "== Counts sau khi chạy =="
                 mysql_run rental_home -e "SELECT 'users' t, COUNT(*) n FROM users UNION ALL SELECT 'room', COUNT(*) FROM room UNION ALL SELECT 'contract', COUNT(*) FROM contract UNION ALL SELECT 'maintenance', COUNT(*) FROM maintenance UNION ALL SELECT 'request', COUNT(*) FROM request UNION ALL SELECT 'follow', COUNT(*) FROM follow UNION ALL SELECT 'rate', COUNT(*) FROM rate;"
+                echo "== Endpoint check =="
+                for u in "/health" "/room/rent-home" "/room/1/rentaler?pageNo=0&pageSize=10"; do
+                  printf '%s -> ' "$u"
+                  curl -s -o /dev/null -w '%{http_code} %{time_total}s\n' "http://127.0.0.1:8083$u"
+                done
                 ;;
               *)
                 echo "mode không hợp lệ: $MODE"; exit 1
