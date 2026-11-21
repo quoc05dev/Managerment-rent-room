@@ -61,7 +61,6 @@ services:
       SPRING_ACTIVEMQ_BROKER_URL: tcp://activemq:61616
       # MaxRAMPercentage chỉ có nghĩa khi có mem_limit; đây là biến PSO cố định 70%.
       JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=70"
-      MANAGEMENT_METRICS_DISTRIBUTION_PERCENTILES_HISTOGRAM_HTTP_SERVER_REQUESTS: "true"
     # Giá trị khởi điểm; runner sẽ docker update theo từng candidate.
     cpus: "2.0"
     mem_limit: 2048m
