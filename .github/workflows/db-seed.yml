@@ -41,8 +41,11 @@ jobs:
             git checkout -f main
             git reset --hard origin/main
 
-            PW=$(grep '^MYSQL_ROOT_PASSWORD=' .env | cut -d= -f2-)
+            PW=$(docker inspect rental-mysql --format '{{range .Config.Env}}{{println .}}{{end}}' \
+                 | grep '^MYSQL_ROOT_PASSWORD=' | cut -d= -f2-)
+            [ -n "$PW" ] || { echo "Không đọc được MYSQL_ROOT_PASSWORD từ container"; exit 1; }
             mysql_run() { docker exec -e MYSQL_PWD="$PW" -i rental-mysql mysql -uroot "$@"; }
+            echo "env keys: $(cut -d= -f1 .env | tr '\n' ' ')"
 
             case "$MODE" in
               inspect)

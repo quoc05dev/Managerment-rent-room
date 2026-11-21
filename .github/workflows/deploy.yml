@@ -8,6 +8,8 @@ on:
       - 'docs/**'
       - 'experiments/**'
       - '*.md'
+      - '.github/workflows/db-seed.yml'
+      - '.github/workflows/p0-baseline.yml'
 
 permissions:
   contents: read
