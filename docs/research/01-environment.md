@@ -72,11 +72,13 @@ Dung lượng Docker: 78 image / 36.43 GB, 64 container / 916.6 MB, 48 volume /
 16.73 GB, **build cache 75.12 GB (65.45 GB reclaimable)**. Cần dọn cache trước khi
 chạy thí nghiệm dài để tránh đầy đĩa.
 
-## 6. Baseline smoke (P0)
+## 6. Baseline smoke
 
 Kịch bản `experiments/load/smoke.js`, chạy trực tiếp vào backend
 (`http://127.0.0.1:8083`), **5 rps trong 30s**, 3 endpoint công khai:
-`/health`, `/room/rent-home`, `/room/1/rentaler?pageNo=0&pageSize=10`.
+`/health`, `/room/rent-home`, `/room/1000001/rentaler?pageNo=0&pageSize=10`.
+
+Đo lần 1 (commit `ca75188`) khi DB **gần rỗng**:
 
 | Chỉ số | Giá trị |
 |---|---|
@@ -86,17 +88,30 @@ Kịch bản `experiments/load/smoke.js`, chạy trực tiếp vào backend
 | Trung bình | 8.91 ms |
 | Tỉ lệ lỗi | **0%** |
 
-Đây là **smoke test**, không phải capacity test: tải rất thấp và DB gần rỗng nên
-P95 chỉ xác nhận harness hoạt động. Số liệu dùng cho nghiên cứu sẽ lấy từ capacity
-test trên stack clone ở P2.
+Đo lần 2 (commit `71d17ca`) sau khi nạp dataset P2 (`experiments/data/seed.sql`:
+5.000 phòng, 220 user, 10.000 ảnh, 10.000 tiện ích, 5.000 đánh giá):
+
+| Chỉ số | Giá trị |
+|---|---|
+| Tổng request | 151 |
+| RPS thực tế | 5.03 |
+| P95 (client) | **174.76 ms** |
+| Trung bình | 61.70 ms |
+| Tỉ lệ lỗi | **0%** |
+
+Chênh lệch ~13,6 lần chứng minh baseline rỗng không đại diện. Nguyên nhân: `GET
+/room/rent-home` hard-code `PageRequest.of(0, 100)` và mapper ModelMapper kéo lazy
+`category/location/user/assets/roomMedia` cho từng phòng → N+1 (~600 query/request);
+riêng endpoint này warm ~185–228 ms/request. Đây vẫn là **smoke test**, không phải
+capacity test; số liệu chính thức lấy từ capacity test trên stack clone ở P2.
 
 ## 7. Phát hiện trong P0
 
 1. **`GET /room` (không có `userId`) trả 500 khi anonymous.** Endpoint được
    `permitAll` nhưng service gọi `getUserId()` và ném exception. Không dùng endpoint
    này trong load test cho tới khi sửa; ghi nhận như bug production.
-2. **DB gần rỗng**: `/health` báo `totalUsers=1`, `totalRoles=3`. Chưa có dữ liệu
-   phòng/hợp đồng đủ để P95 đại diện → bắt buộc seeder ở P2.
+2. **DB gần rỗng** (lúc P0): `/health` báo `totalUsers=1`, `totalRoles=3`. Đã xử lý
+   ở P2 bằng `experiments/data/seed.sql` (xem `02-dataset.md`).
 3. **Không có giới hạn tài nguyên** và **không có `JAVA_TOOL_OPTIONS`** → baseline
    hiện tại không xác định được trần heap; P1 phải thêm biến này.
 4. **VPS dùng chung rất nặng**: 64 container, 51 đang chạy, gồm `minikube`,
