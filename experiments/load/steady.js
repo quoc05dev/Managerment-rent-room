@@ -39,6 +39,7 @@ export const options = {
   thresholds: {
     'http_req_duration{phase:steady}': ['p(95)<600000'],
     'http_req_failed{phase:steady}': ['rate<1.1'],
+    'http_reqs{phase:steady}': ['count>0'],
   },
 };
 
