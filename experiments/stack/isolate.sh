@@ -33,8 +33,11 @@ EOF
     ;;
   status)
     systemctl status "$SLICE" --no-pager || true
+    systemctl show "$SLICE" -p ActiveState -p SubState -p ControlGroup || true
     echo "cpu.max: $(cat "/sys/fs/cgroup/$SLICE/cpu.max" 2>/dev/null || echo n/a)"
     echo "memory.max: $(cat "/sys/fs/cgroup/$SLICE/memory.max" 2>/dev/null || echo n/a)"
+    echo "cgroup path: $(ls -d "/sys/fs/cgroup/$SLICE" 2>/dev/null || echo none)"
+    find "/sys/fs/cgroup/$SLICE" -maxdepth 2 -type d 2>/dev/null | head -5 || true
     ;;
   *)
     echo "dùng: $0 create|status|remove"; exit 1
