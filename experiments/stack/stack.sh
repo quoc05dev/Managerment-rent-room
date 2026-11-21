@@ -46,7 +46,9 @@ case "$MODE" in
     for c in rental-backend rental-exp-backend rental-exp-mysql; do
       echo "$c -> $(docker inspect "$c" --format '{{.HostConfig.CgroupParent}}' 2>/dev/null || echo 'khong co')"
     done
-    echo "== slice rental-exp =="; cat /sys/fs/cgroup/rental-exp.slice/cpu.max 2>/dev/null || echo "chua tao slice"
+    echo "== slice rental-exp =="
+    CG="$(systemctl show rental-exp.slice -p ControlGroup --value 2>/dev/null || true)"
+    [ -n "$CG" ] && cat "/sys/fs/cgroup$CG/cpu.max" 2>/dev/null || echo "chua tao slice"
     echo "== ports dang dung =="; ss -ltn | grep -E ':(18085|3317|8083|8085)\b' || true
     ;;
   up)
