@@ -62,6 +62,13 @@ case "$MODE" in
     "${COMPOSE[@]}" ps
     docker stats --no-stream --format '{{.Name}} {{.CPUPerc}} {{.MemUsage}}' | grep rental-exp- || true
     ;;
+  results)
+    latest=$(ls -t experiments/results/raw/pso-*.jsonl 2>/dev/null | head -1 || true)
+    [ -n "$latest" ] || { echo "chua co ket qua"; exit 1; }
+    echo "== $latest =="; tail -n 5 "$latest"
+    echo "== gbest gan nhat =="
+    cat "$(ls -t experiments/results/raw/gbest-*.json 2>/dev/null | head -1)"
+    ;;
   down)
     "${COMPOSE[@]}" down
     ;;

@@ -5,11 +5,11 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "probe | up | seed | smoke | status | down | dry | run"
+        description: "probe | up | seed | smoke | status | results | down | dry | run"
         required: true
         default: probe
         type: choice
-        options: [probe, up, seed, smoke, status, down, dry, run]
+        options: [probe, up, seed, smoke, status, results, down, dry, run]
       max_evals:
         description: "Số evaluation tối đa cho mode=run (mặc định 4 để smoke)"
         required: false
