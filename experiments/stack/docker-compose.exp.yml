@@ -1,0 +1,80 @@
+# Stack clone cho thực nghiệm (P2/P3) — KHÔNG publish ra Internet.
+#   docker compose -p rental-exp -f experiments/stack/docker-compose.exp.yml up -d
+# Backend dùng chung image với production; DB riêng nhưng phải tên rental_home
+# vì native query hard-code `from rental_home.room`.
+name: rental-exp
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: rental-exp-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${EXP_MYSQL_PASSWORD:-exp_password}
+      MYSQL_DATABASE: rental_home
+    ports:
+      - "127.0.0.1:3317:3306"
+    volumes:
+      - exp-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${EXP_MYSQL_PASSWORD:-exp_password}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    # Giá trị khởi điểm; runner sẽ docker update theo từng candidate.
+    cpus: "1.0"
+    mem_limit: 1024m
+
+  activemq:
+    image: rmohr/activemq:5.15.9
+    container_name: rental-exp-activemq
+    restart: unless-stopped
+    environment:
+      ACTIVEMQ_ADMIN_LOGIN: admin
+      ACTIVEMQ_ADMIN_PASSWORD: admin
+    volumes:
+      - exp-activemq-data:/data/activemq
+    cpus: "0.5"
+    mem_limit: 512m
+
+  backend:
+    image: ${BACKEND_IMAGE:-managerment-rent-room-backend}
+    build:
+      context: ./rental-management
+      dockerfile: Dockerfile
+    container_name: rental-exp-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      activemq:
+        condition: service_started
+    ports:
+      - "127.0.0.1:8085:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/rental_home?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&useLegacyDatetimeCode=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${EXP_MYSQL_PASSWORD:-exp_password}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "false"
+      SPRING_ACTIVEMQ_BROKER_URL: tcp://activemq:61616
+      # MaxRAMPercentage chỉ có nghĩa khi có mem_limit; đây là biến PSO cố định 70%.
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=70"
+      MANAGEMENT_METRICS_DISTRIBUTION_PERCENTILES_HISTOGRAM_HTTP_SERVER_REQUESTS: "true"
+    # Giá trị khởi điểm; runner sẽ docker update theo từng candidate.
+    cpus: "2.0"
+    mem_limit: 2048m
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    volumes:
+      - exp-upload-data:/hdd/data/photographer
+
+volumes:
+  exp-mysql-data:
+  exp-activemq-data:
+  exp-upload-data:

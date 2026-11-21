@@ -10,6 +10,7 @@ on:
       - '*.md'
       - '.github/workflows/db-seed.yml'
       - '.github/workflows/p0-baseline.yml'
+      - '.github/workflows/experiments.yml'
 
 permissions:
   contents: read
