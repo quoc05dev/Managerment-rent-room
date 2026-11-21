@@ -1,15 +1,22 @@
 # Cấu hình thực nghiệm PSO — nguồn sự thật duy nhất cho mọi run.
+# Hàm mục tiêu theo Chương 2: F = α·L_norm + β·R_norm + γ·P_SLA.
 # Mọi thay đổi phải commit kèm lý do; harness đọc file này, không hard-code.
 
 research:
   name: "PSO tối ưu tài nguyên Docker cho hệ thống quản lý thuê nhà"
-  version: 1
+  version: 2
 
-# TODO(P0 -> P2): chốt sau capacity test trên stack clone.
 slo:
-  p95_ms: 500
+  p95_ms: 500            # L_SLA trong công thức
   max_error_rate: 0.01
   max_oom: 0
+
+resources:
+  # Mẫu số của R_norm: ΣCPU/CPU_avail + ΣRAM/RAM_avail (bằng biên trên search space).
+  cpu_avail: 4.0
+  ram_avail_mb: 4096
+  # Mỗi container đóng góp 2 chiều [CPU, RAM]. Thêm "mysql" để thành 4 chiều.
+  containers: [backend]
 
 load:
   # Gọi trực tiếp backend để loại nhiễu Cloudflare/nginx; stack clone dùng port riêng.
@@ -23,12 +30,15 @@ load:
   endpoints:
     - "/health"
     - "/room/rent-home"
-    - "/room/1/rentaler?pageNo=0&pageSize=10"
+    - "/room/1000001/rentaler?pageNo=0&pageSize=10"
+
+jvm:
+  # heap_pct không phải biến PSO; cố định cho mọi candidate, kiểm tra độ nhạy riêng.
+  max_ram_percentage: 70
 
 search_space:
   cpus: { min: 0.5, max: 4.0, step: 0.25 }
   mem_mb: { min: 768, max: 4096, step: 128 }
-  heap_pct: { min: 50, max: 75, step: 1 }
 
 pso:
   swarm: 12
@@ -38,18 +48,18 @@ pso:
   c2: 1.49
   vmax_ratio: 0.2
   seed: 42
-  repetitions: 2
+  repetitions: 1          # 1 lần/candidate trong vòng lặp
+  validation_runs: 10     # chạy lại GBest cuối để kiểm chứng
 
 fitness:
-  w_cpu: 0.5
-  w_mem: 0.5
-  lambda_slo: 5
-  lambda_oom: 1000
-  lambda_restart: 100
-  lambda_err: 100
+  alpha: 0.5
+  beta: 0.5
+  gamma: 1.0
+  sensitivity:
+    gamma: [0.5, 1.0, 2.0]
 
 budget:
-  max_evaluations: 140
+  max_evaluations: 120    # swarm × iterations × repetitions (chưa tính baseline/validation)
   max_hours: 10
 
 baselines:
