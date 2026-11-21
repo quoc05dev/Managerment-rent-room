@@ -84,9 +84,10 @@ nhiên và là lý do chính khiến P95 tăng 13,6 lần so với DB rỗng.
 
 ## 6. Việc còn lại của P2
 
-- Dựng stack clone `rental-exp` (compose riêng, MySQL riêng cùng tên DB
-  `rental_home`, port 8085) và nạp cùng seed.sql.
-- Chạy `experiments/load/capacity.js` trên clone để chốt `target_rps` thật thay
+- [x] Dựng stack clone `rental-exp` (compose riêng, MySQL riêng cùng tên DB
+  `rental_home`, backend port **18085** vì 8085 bị chiếm) và nạp cùng seed.sql.
+  Xem `03-isolation.md`.
+- [ ] Chạy `experiments/load/capacity.js` trên clone để chốt `target_rps` thật thay
   cho giá trị provisional 20.
-- Tắt `spring.jpa.show-sql` khi đo (hiện `true`, log SQL làm nhiễu I/O).
-- Cân nhắc sửa `GET /room` anonymous 500 (bug production, không chặn P2).
+- [x] Tắt `spring.jpa.show-sql` khi đo (clone đặt `SPRING_JPA_SHOW_SQL=false`).
+- [ ] Cân nhắc sửa `GET /room` anonymous 500 (bug production, không chặn P2).
