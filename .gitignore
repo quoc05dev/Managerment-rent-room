@@ -12,3 +12,6 @@ rental-management/node_modules/
 # IDE
 .idea/
 *.iml
+
+# Experiment raw data (aggregate CSV/figures vẫn commit)
+experiments/results/raw/

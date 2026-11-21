@@ -1,0 +1,29 @@
+name: P0 Baseline
+
+# Workflow tạm cho giai đoạn P0: thu thập môi trường + smoke baseline.
+# Sẽ xoá sau khi điền xong docs/research/01-environment.md.
+on:
+  workflow_dispatch:
+
+jobs:
+  p0:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Collect environment and smoke baseline
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          command_timeout: 15m
+          script: |
+            set -uo pipefail
+            cd ~/Quoc/Managerment-rent-room
+            git fetch origin
+            git checkout -f main
+            git reset --hard origin/main
+            echo "########## ENV REPORT ##########"
+            bash experiments/runner/env_report.sh
+            echo "########## SMOKE BASELINE ##########"
+            RPS=5 DURATION=30s bash experiments/runner/smoke_baseline.sh

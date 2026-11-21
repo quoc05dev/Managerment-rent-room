@@ -1,0 +1,57 @@
+# Cấu hình thực nghiệm PSO — nguồn sự thật duy nhất cho mọi run.
+# Mọi thay đổi phải commit kèm lý do; harness đọc file này, không hard-code.
+
+research:
+  name: "PSO tối ưu tài nguyên Docker cho hệ thống quản lý thuê nhà"
+  version: 1
+
+# TODO(P0 -> P2): chốt sau capacity test trên stack clone.
+slo:
+  p95_ms: 500
+  max_error_rate: 0.01
+  max_oom: 0
+
+load:
+  # Gọi trực tiếp backend để loại nhiễu Cloudflare/nginx; stack clone dùng port riêng.
+  base_url: "http://127.0.0.1:8083"
+  # TODO(P2): đặt bằng 70% RPS bền vững đo được từ capacity test.
+  target_rps: 20
+  warmup_seconds: 60
+  ramp_seconds: 20
+  steady_seconds: 120
+  rampdown_seconds: 20
+  endpoints:
+    - "/health"
+    - "/room?title=&pageNo=0&pageSize=10"
+    - "/room/rent-home"
+
+search_space:
+  cpus: { min: 0.5, max: 4.0, step: 0.25 }
+  mem_mb: { min: 768, max: 4096, step: 128 }
+  heap_pct: { min: 50, max: 75, step: 1 }
+
+pso:
+  swarm: 12
+  iterations: 10
+  w: 0.72
+  c1: 1.49
+  c2: 1.49
+  vmax_ratio: 0.2
+  seed: 42
+  repetitions: 2
+
+fitness:
+  w_cpu: 0.5
+  w_mem: 0.5
+  lambda_slo: 5
+  lambda_oom: 1000
+  lambda_restart: 100
+  lambda_err: 100
+
+budget:
+  max_evaluations: 140
+  max_hours: 10
+
+baselines:
+  grid_points: 27
+  random_points: 27
