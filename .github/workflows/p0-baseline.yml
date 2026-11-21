@@ -1,7 +1,7 @@
 name: P0 Baseline
 
-# Workflow tạm cho giai đoạn P0: thu thập môi trường + smoke baseline.
-# Sẽ xoá sau khi điền xong docs/research/01-environment.md.
+# Workflow tái lập bằng chứng P0: thu thập môi trường + smoke baseline.
+# Chạy thủ công (workflow_dispatch) để sinh lại docs/research/01-environment.md.
 on:
   workflow_dispatch:
 

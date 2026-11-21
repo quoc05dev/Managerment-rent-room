@@ -3,6 +3,11 @@ name: CI/CD Pipeline
 on:
   push:
     branches: [main]
+    # Tài liệu/thực nghiệm không ảnh hưởng image: tránh redeploy production.
+    paths-ignore:
+      - 'docs/**'
+      - 'experiments/**'
+      - '*.md'
 
 permissions:
   contents: read
