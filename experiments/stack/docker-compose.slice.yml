@@ -1,0 +1,10 @@
+# Overlay tuỳ chọn: gắn toàn bộ stack thực nghiệm vào một cgroup slice.
+# Dùng cùng base file:
+#   EXP_ISOLATE=1 bash experiments/stack/stack.sh up
+services:
+  mysql:
+    cgroup_parent: rental-exp.slice
+  activemq:
+    cgroup_parent: rental-exp.slice
+  backend:
+    cgroup_parent: rental-exp.slice

@@ -282,6 +282,7 @@ def fake_metrics(vec, cfg):
         "p95_ms": round(p95, 1),
         "error_rate": 0.0,
         "rps": cfg["load"]["target_rps"],
+        "throughput_rps": cfg["load"]["target_rps"],
         "requests": int(cfg["load"]["target_rps"] * cfg["load"]["steady_seconds"]),
         "cpu_used": {"backend": round(min(be[0], 1.5), 2), "mysql": round(min(db[0], 0.5), 2)},
         "mem_peak_mb": {"backend": round(be[1] * 0.85, 1), "mysql": round(db[1] * 0.4, 1)},
@@ -318,6 +319,8 @@ def evaluate(vec, cfg, dry=False):
         "p95_ms": k6.get("p95_ms"),
         "error_rate": k6.get("error_rate"),
         "rps": k6.get("rps"),
+        "throughput_rps": round(k6["requests"] / cfg["load"]["steady_seconds"], 2)
+        if k6.get("requests") else None,
         "requests": k6.get("requests"),
         **sampler_metrics(sampler.samples, names),
         **oom_delta(before, after, names),

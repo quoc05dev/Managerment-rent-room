@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
-# Quản lý stack clone thực nghiệm (project rental-exp, cổng 8085/3317).
-#   bash experiments/stack/stack.sh probe|up|seed|smoke|status|down
+# Quản lý stack clone thực nghiệm (project rental-exp, cổng 18085/3317).
+#   bash experiments/stack/stack.sh probe|up|seed|smoke|status|results|slice-*|down
+#   EXP_ISOLATE=1 ... up  -> gắn cgroup_parent rental-exp.slice (xem isolate.sh)
 set -euo pipefail
 cd "$(dirname "$0")/../.." || exit 1
 
 MODE="${1:-status}"
-COMPOSE_FILE="experiments/stack/docker-compose.exp.yml"
-COMPOSE=(docker compose -p rental-exp -f "$COMPOSE_FILE")
+COMPOSE_FILES=(-f experiments/stack/docker-compose.exp.yml)
+[ "${EXP_ISOLATE:-0}" = "1" ] && COMPOSE_FILES+=(-f experiments/stack/docker-compose.slice.yml)
+COMPOSE=(docker compose -p rental-exp "${COMPOSE_FILES[@]}")
 EXP_MYSQL_PASSWORD="${EXP_MYSQL_PASSWORD:-exp_password}"
 BACKEND_URL="${BACKEND_URL:-http://127.0.0.1:18085}"
 export EXP_MYSQL_PASSWORD
@@ -68,6 +70,9 @@ case "$MODE" in
     echo "== $latest =="; tail -n 5 "$latest"
     echo "== gbest gan nhat =="
     cat "$(ls -t experiments/results/raw/gbest-*.json 2>/dev/null | head -1)"
+    ;;
+  slice-create|slice-status|slice-remove)
+    bash experiments/stack/isolate.sh "${MODE#slice-}"
     ;;
   down)
     "${COMPOSE[@]}" down
