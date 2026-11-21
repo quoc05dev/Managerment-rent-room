@@ -1,10 +1,11 @@
 # Cấu hình thực nghiệm PSO — nguồn sự thật duy nhất cho mọi run.
-# Hàm mục tiêu theo Chương 2: F = α·L_norm + β·R_norm + γ·P_SLA.
+# Chương 2 (lý thuyết): F = α·L_norm + β·R_norm + γ·P_SLA.
+# Chương 3 (thực nghiệm): 4 chiều (backend + mysql), w_oom = 100.
 # Mọi thay đổi phải commit kèm lý do; harness đọc file này, không hard-code.
 
 research:
   name: "PSO tối ưu tài nguyên Docker cho hệ thống quản lý thuê nhà"
-  version: 2
+  version: 3
 
 slo:
   p95_ms: 500            # L_SLA trong công thức
@@ -12,11 +13,11 @@ slo:
   max_oom: 0
 
 resources:
-  # Mẫu số của R_norm: ΣCPU/CPU_avail + ΣRAM/RAM_avail (bằng biên trên search space).
+  # Ngân sách chung của ứng dụng; cũng là mẫu số của R_norm.
   cpu_avail: 4.0
   ram_avail_mb: 4096
-  # Mỗi container đóng góp 2 chiều [CPU, RAM]. Thêm "mysql" để thành 4 chiều.
-  containers: [backend]
+  # Mỗi container đóng góp 2 chiều [CPU, RAM] → 4 chiều.
+  containers: [backend, mysql]
 
 load:
   # Gọi trực tiếp backend để loại nhiễu Cloudflare/nginx; stack clone dùng port riêng.
@@ -37,12 +38,23 @@ jvm:
   max_ram_percentage: 70
 
 search_space:
+  # Áp dụng cho từng container trong resources.containers.
   cpus: { min: 0.5, max: 4.0, step: 0.25 }
   mem_mb: { min: 768, max: 4096, step: 128 }
 
+methods:
+  fixed:
+    backend: { cpus: 2.0, mem_mb: 2048 }
+    mysql: { cpus: 1.0, mem_mb: 1024 }
+    runs: 10
+  rule:
+    cpu_headroom: 1.5    # CPU = ceil(peak_cpu * 1.5 / 0.25) * 0.25
+    ram_headroom: 1.3    # RAM = ceil(peak_ws * 1.3 / 128) * 128
+    runs: 10
+
 pso:
-  swarm: 12
-  iterations: 10
+  swarm: 10
+  iterations: 8
   w: 0.72
   c1: 1.49
   c2: 1.49
@@ -55,13 +67,15 @@ fitness:
   alpha: 0.5
   beta: 0.5
   gamma: 1.0
+  w_oom: 100              # Chương 3: OOM phải chi phối phần vượt ngưỡng khác
   sensitivity:
     gamma: [0.5, 1.0, 2.0]
 
 budget:
-  max_evaluations: 120    # swarm × iterations × repetitions (chưa tính baseline/validation)
+  max_evaluations: 80     # swarm × iterations × repetitions
   max_hours: 10
+  per_eval_minutes: 4.5
 
 baselines:
-  grid_points: 27
-  random_points: 27
+  grid_points: 12
+  random_points: 12
