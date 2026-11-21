@@ -1,0 +1,73 @@
+name: DB Seed
+
+# Công cụ tái lập cho dữ liệu thực nghiệm (P2).
+#   inspect: in schema + số dòng hiện tại (chỉ đọc)
+#   seed   : nạp experiments/data/seed.sql (cần confirm=yes)
+#   clean  : xoá dữ liệu seed (cần confirm=yes)
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "inspect | seed | clean"
+        required: true
+        default: inspect
+        type: choice
+        options: [inspect, seed, clean]
+      confirm:
+        description: 'Gõ "yes" để thực sự thay đổi dữ liệu'
+        required: false
+        default: ""
+
+jobs:
+  db:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Run DB task
+        uses: appleboy/ssh-action@v1
+        env:
+          MODE: ${{ inputs.mode }}
+          CONFIRM: ${{ inputs.confirm }}
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          command_timeout: 25m
+          envs: MODE,CONFIRM
+          script: |
+            set -uo pipefail
+            cd ~/Quoc/Managerment-rent-room
+            git fetch origin
+            git checkout -f main
+            git reset --hard origin/main
+
+            PW=$(grep '^MYSQL_ROOT_PASSWORD=' .env | cut -d= -f2-)
+            mysql_run() { docker exec -e MYSQL_PWD="$PW" -i rental-mysql mysql -uroot "$@"; }
+
+            case "$MODE" in
+              inspect)
+                echo "== Tables =="
+                mysql_run -N -e "SELECT table_name, table_rows FROM information_schema.tables WHERE table_schema='rental_home' ORDER BY table_name;"
+                for t in $(mysql_run -N -e "SELECT table_name FROM information_schema.tables WHERE table_schema='rental_home' ORDER BY table_name;"); do
+                  echo "===== $t ====="
+                  mysql_run -e "SHOW CREATE TABLE rental_home.$t\G"
+                  echo "rows: $(mysql_run -N -e "SELECT COUNT(*) FROM rental_home.$t;")"
+                done
+                ;;
+              seed|clean)
+                if [ "$CONFIRM" != "yes" ]; then
+                  echo "Từ chối: confirm phải bằng 'yes'"
+                  exit 1
+                fi
+                FILE="experiments/data/seed.sql"
+                [ "$MODE" = "clean" ] && FILE="experiments/data/clean_seed.sql"
+                [ -f "$FILE" ] || { echo "Thiếu $FILE"; exit 1; }
+                echo "== Applying $FILE =="
+                mysql_run rental_home < "$FILE"
+                echo "== Counts sau khi chạy =="
+                mysql_run rental_home -e "SELECT 'users' t, COUNT(*) n FROM users UNION ALL SELECT 'room', COUNT(*) FROM room UNION ALL SELECT 'contract', COUNT(*) FROM contract UNION ALL SELECT 'maintenance', COUNT(*) FROM maintenance UNION ALL SELECT 'request', COUNT(*) FROM request UNION ALL SELECT 'follow', COUNT(*) FROM follow UNION ALL SELECT 'rate', COUNT(*) FROM rate;"
+                ;;
+              *)
+                echo "mode không hợp lệ: $MODE"; exit 1
+                ;;
+            esac
