@@ -9,7 +9,7 @@ const DURATION = __ENV.DURATION || '30s';
 // /room (khong co userId) tra 500 khi anonymous: getUserId() nem exception.
 // Dung cac endpoint cong khai that su hoat dong cho baseline.
 const PATHS = (__ENV.PATHS ||
-  '/health,/room/rent-home,/room/1/rentaler?pageNo=0&pageSize=10').split(',');
+  '/health,/room/rent-home,/room/1000001/rentaler?pageNo=0&pageSize=10').split(',');
 
 export const options = {
   scenarios: {
