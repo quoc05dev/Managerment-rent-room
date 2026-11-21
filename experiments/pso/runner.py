@@ -257,7 +257,7 @@ def run_k6(cfg):
     if os.path.exists(out):
         os.remove(out)
     cmd = [
-        "docker", "run", "--rm", "--network", "host",
+        "docker", "run", "--rm", "-i", "--network", "host",
         "--user", f"{os.getuid()}:{os.getgid()}",
         "-v", f"{RESULTS_DIR}:/out",
         "-e", f"BASE_URL={load['base_url']}",
