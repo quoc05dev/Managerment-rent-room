@@ -43,7 +43,7 @@ case "$MODE" in
     echo "== cgroup parent cua rental-backend =="; docker inspect rental-backend --format '{{.HostConfig.CgroupParent}}' 2>/dev/null || true
     ;;
   up)
-    "${COMPOSE[@]}" up -d --build --remove-orphans
+    "${COMPOSE[@]}" up -d --remove-orphans
     "${COMPOSE[@]}" ps
     wait_health
     ;;

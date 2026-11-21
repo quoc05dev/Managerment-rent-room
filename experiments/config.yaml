@@ -21,7 +21,7 @@ resources:
 
 load:
   # Gọi trực tiếp backend để loại nhiễu Cloudflare/nginx; stack clone dùng port riêng.
-  base_url: "http://127.0.0.1:8083"
+  base_url: "http://127.0.0.1:8085"
   # TODO(P2): đặt bằng 70% RPS bền vững đo được từ capacity test.
   target_rps: 20
   warmup_seconds: 60
@@ -62,6 +62,7 @@ pso:
   seed: 42
   repetitions: 1          # 1 lần/candidate trong vòng lặp
   validation_runs: 10     # chạy lại GBest cuối để kiểm chứng
+  stall_iterations: 3     # dừng nếu gBest không cải thiện K vòng
 
 fitness:
   alpha: 0.5
