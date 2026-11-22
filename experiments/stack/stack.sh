@@ -71,11 +71,16 @@ case "$MODE" in
     docker stats --no-stream --format '{{.Name}} {{.CPUPerc}} {{.MemUsage}}' | grep rental-exp- || true
     ;;
   results)
+    found=0
+    for m in fixed rule validate; do
+      f=$(ls -t experiments/results/raw/compare-*-"$m".json 2>/dev/null | head -1 || true)
+      [ -n "$f" ] && { echo "== $m: $f =="; cat "$f"; echo; found=1; }
+    done
     latest=$(ls -t experiments/results/raw/pso-*.jsonl 2>/dev/null | head -1 || true)
-    [ -n "$latest" ] || { echo "chua co ket qua"; exit 1; }
-    echo "== $latest =="; tail -n 5 "$latest"
-    echo "== gbest gan nhat =="
-    cat "$(ls -t experiments/results/raw/gbest-*.json 2>/dev/null | head -1)"
+    [ -n "$latest" ] && { echo "== $latest =="; tail -n 5 "$latest"; found=1; }
+    gb=$(ls -t experiments/results/raw/gbest-*.json 2>/dev/null | head -1 || true)
+    [ -n "$gb" ] && { echo "== gbest gan nhat =="; cat "$gb"; found=1; }
+    [ "$found" = "1" ] || { echo "chua co ket qua"; exit 1; }
     ;;
   slice-create|slice-status|slice-remove)
     bash experiments/stack/isolate.sh "${MODE#slice-}"
