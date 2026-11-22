@@ -70,6 +70,14 @@ case "$MODE" in
     "${COMPOSE[@]}" ps
     docker stats --no-stream --format '{{.Name}} {{.CPUPerc}} {{.MemUsage}}' | grep rental-exp- || true
     ;;
+  raw)
+    for m in fixed rule validate; do
+      f=$(ls -t experiments/results/raw/compare-*-"$m".jsonl 2>/dev/null | head -1 || true)
+      [ -n "$f" ] && { echo "== $m =="; cat "$f"; }
+    done
+    latest=$(ls -t experiments/results/raw/pso-*.jsonl 2>/dev/null | head -1 || true)
+    [ -n "$latest" ] && { echo "== pso =="; cat "$latest"; }
+    ;;
   results)
     found=0
     for m in fixed rule validate; do
