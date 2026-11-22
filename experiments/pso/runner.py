@@ -263,7 +263,9 @@ def init_particle(cfg):
 
 def apply_config(vec, base_url):
     for n, (cpus, mem_mb) in vec.items():
-        sh(["docker", "update", f"--cpus={cpus}", f"--memory={int(mem_mb)}m", container_name(n)])
+        m = int(mem_mb)
+        sh(["docker", "update", f"--cpus={cpus}", f"--memory={m}m",
+            f"--memory-swap={m}m", container_name(n)])
     # JVM chỉ đọc lại MaxRAMPercentage khi khởi động.
     sh(["docker", "restart", container_name("backend")])
     return wait_health(base_url)
