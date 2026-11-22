@@ -12,11 +12,13 @@ Chạy trên host VPS (cần python3 + pyyaml + docker), stack `rental-exp` đan
 
 import argparse
 import copy
+import glob
 import hashlib
 import json
 import math
 import os
 import random
+import statistics
 import subprocess
 import sys
 import threading
@@ -77,9 +79,18 @@ def docker_inspect(name, fmt):
     return sh(["docker", "inspect", "-f", fmt, name]).stdout.strip()
 
 
+_CGROUP_CACHE = {}
+
+
 def cgroup_dir(name):
+    # Container có thể nằm trong system.slice (không cô lập) hoặc
+    # rental.slice/rental-exp.slice (EXP_ISOLATE=1) -> tìm theo container id.
     cid = docker_inspect(name, "{{.Id}}")
-    return f"/sys/fs/cgroup/system.slice/docker-{cid}.scope"
+    if cid not in _CGROUP_CACHE:
+        hits = glob.glob(f"/sys/fs/cgroup/**/docker-{cid}.scope", recursive=True)
+        _CGROUP_CACHE[cid] = hits[0] if hits else \
+            f"/sys/fs/cgroup/system.slice/docker-{cid}.scope"
+    return _CGROUP_CACHE[cid]
 
 
 def read_kv(path):
@@ -148,17 +159,25 @@ class Sampler(threading.Thread):
 
 def sampler_metrics(samples, names):
     if len(samples) < 2:
-        return {"cpu_used": {}, "mem_peak_mb": {}, "throttled_ratio": {}}
+        return {"cpu_used": {}, "cpu_peak": {}, "mem_peak_mb": {}, "throttled_ratio": {}}
     first, last = samples[0], samples[-1]
     dt = max(last["t"] - first["t"], 1e-9)
-    cpu_used, mem_peak, throttled = {}, {}, {}
+    cpu_used, cpu_peak, mem_peak, throttled = {}, {}, {}, {}
     for n in names:
         du = last[n]["cpu"].get("usage_usec", 0) - first[n]["cpu"].get("usage_usec", 0)
         cpu_used[n] = round(du / 1e6 / dt, 3)
+        rates = []
+        for a, b in zip(samples, samples[1:]):
+            d = b["t"] - a["t"]
+            if d > 0:
+                rates.append((b[n]["cpu"].get("usage_usec", 0)
+                              - a[n]["cpu"].get("usage_usec", 0)) / 1e6 / d)
+        cpu_peak[n] = round(max(rates), 3) if rates else 0.0
         mem_peak[n] = round(max(s[n]["mem"] for s in samples) / (1024 * 1024), 1)
         tu = last[n]["cpu"].get("throttled_usec", 0) - first[n]["cpu"].get("throttled_usec", 0)
         throttled[n] = round(tu / du, 4) if du > 0 else 0.0
-    return {"cpu_used": cpu_used, "mem_peak_mb": mem_peak, "throttled_ratio": throttled}
+    return {"cpu_used": cpu_used, "cpu_peak": cpu_peak,
+            "mem_peak_mb": mem_peak, "throttled_ratio": throttled}
 
 
 def oom_snapshot(names):
@@ -285,6 +304,8 @@ def fake_metrics(vec, cfg):
         "throughput_rps": cfg["load"]["target_rps"],
         "requests": int(cfg["load"]["target_rps"] * cfg["load"]["steady_seconds"]),
         "cpu_used": {"backend": round(min(be[0], 1.5), 2), "mysql": round(min(db[0], 0.5), 2)},
+        "cpu_peak": {"backend": round(min(be[0] * 1.2, 4.0), 2),
+                     "mysql": round(min(db[0] * 1.2, 4.0), 2)},
         "mem_peak_mb": {"backend": round(be[1] * 0.85, 1), "mysql": round(db[1] * 0.4, 1)},
         "throttled_ratio": {"backend": 0.0, "mysql": 0.0},
         "oom": oom, "oom_kill": oom, "restarts": oom, "healthy": True,
@@ -359,6 +380,127 @@ def is_feasible(metrics, cfg):
     )
 
 
+# ---------- Ba phương án so sánh (Chương 3) ----------
+
+def fixed_vector(cfg):
+    m = cfg["methods"]["fixed"]
+    return {n: [float(m[n]["cpus"]), float(m[n]["mem_mb"])]
+            for n in cfg["resources"]["containers"]}
+
+
+def rule_vector(cfg, metrics):
+    """CPU = ceil(peak_cpu*1.5/0.25)*0.25; RAM = ceil(peak_ws*1.3/128)*128."""
+    rule = cfg["methods"]["rule"]
+    cpu, mem = cfg["search_space"]["cpus"], cfg["search_space"]["mem_mb"]
+    vec = {}
+    for n in cfg["resources"]["containers"]:
+        peak_cpu = metrics.get("cpu_peak", {}).get(n) or metrics["cpu_used"].get(n, 0)
+        c = math.ceil(peak_cpu * rule["cpu_headroom"] / cpu["step"]) * cpu["step"]
+        r = math.ceil(metrics["mem_peak_mb"][n] * rule["ram_headroom"] / mem["step"]) * mem["step"]
+        vec[n] = [clamp(round(c, 6), cpu["min"], cpu["max"]),
+                  clamp(round(r, 6), mem["min"], mem["max"])]
+    return repair(vec, cfg)
+
+
+def latest_gbest():
+    files = sorted(glob.glob(os.path.join(RESULTS_DIR, "gbest-*.json")))
+    if not files:
+        raise SystemExit("chưa có gbest-*.json để validate")
+    with open(files[-1], encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _mean(vals):
+    return round(statistics.mean(vals), 2) if vals else None
+
+
+def aggregate(rows, names):
+    p95 = [r["metrics"]["p95_ms"] for r in rows if r["metrics"].get("p95_ms") is not None]
+    thr = [r["metrics"]["throughput_rps"] for r in rows
+           if r["metrics"].get("throughput_rps") is not None]
+    err = [r["metrics"]["error_rate"] for r in rows
+           if r["metrics"].get("error_rate") is not None]
+    return {
+        "runs": len(rows),
+        "p95_mean": _mean(p95),
+        "p95_median": round(statistics.median(p95), 2) if p95 else None,
+        "p95_min": round(min(p95), 2) if p95 else None,
+        "p95_max": round(max(p95), 2) if p95 else None,
+        "throughput_mean": _mean(thr),
+        "error_rate_mean": _mean(err),
+        "cpu_used_mean": {n: _mean([r["metrics"]["cpu_used"].get(n, 0) for r in rows]) for n in names},
+        "mem_peak_mean": {n: _mean([r["metrics"]["mem_peak_mb"].get(n, 0) for r in rows]) for n in names},
+        "oom_total": sum(r["metrics"].get("oom", 0) for r in rows),
+        "restarts_total": sum(r["metrics"].get("restarts", 0) for r in rows),
+        "feasible": sum(1 for r in rows if r["feasible"]),
+        "F_mean": _mean([r["F"] for r in rows if math.isfinite(r["F"])]),
+    }
+
+
+def run_method(cfg, args):
+    method = args.method
+    names = cfg["resources"]["containers"]
+    stamp = datetime.now().strftime("%Y%m%dT%H%M%S")
+    os.makedirs(RESULTS_DIR, exist_ok=True)
+    log_path = os.path.join(RESULTS_DIR, f"compare-{stamp}-{method}.jsonl")
+    log = open(log_path, "w", encoding="utf-8")
+    rows, search_s = [], 0.0
+
+    def record(iteration, particle, vec, metrics, f, feasible, note=None):
+        row = {"ts": now_iso(), "method": method, "iteration": iteration,
+               "particle": particle, "x": vec, "metrics": metrics,
+               "F": f, "feasible": feasible, "note": note}
+        log.write(json.dumps(row, ensure_ascii=False) + "\n")
+        log.flush()
+        return row
+
+    if method == "fixed":
+        vec = fixed_vector(cfg)
+        runs = args.runs or cfg["methods"]["fixed"]["runs"]
+    elif method == "rule":
+        cal_vec = fixed_vector(cfg)
+        cal_started = time.time()
+        cal_metrics = evaluate(cal_vec, cfg, args.dry_run)
+        search_s = time.time() - cal_started
+        vec = rule_vector(cfg, cal_metrics)
+        record(-1, -1, cal_vec, cal_metrics,
+               fitness(cal_vec, cal_metrics, cfg), is_feasible(cal_metrics, cfg), "calibration")
+        runs = args.runs or cfg["methods"]["rule"]["runs"]
+        print(f"  rule từ calibration: {vector_str(vec)} (cal={search_s:.1f}s)")
+    elif method == "validate":
+        gb = latest_gbest()
+        vec = {n: [float(v[0]), float(v[1])] for n, v in gb["gbest"].items()}
+        runs = args.runs or cfg["pso"]["validation_runs"]
+    else:
+        raise SystemExit(f"method không hỗ trợ: {method}")
+
+    started = time.time()
+    for i in range(runs):
+        metrics = evaluate(vec, cfg, args.dry_run)
+        f = fitness(vec, metrics, cfg)
+        rows.append(record(0, i, vec, metrics, f, is_feasible(metrics, cfg)))
+        print(f"  {method} run {i + 1}/{runs}: F={f:.4f} "
+              f"p95={metrics.get('p95_ms')} oom={metrics.get('oom')}")
+    wall_s = time.time() - started
+
+    summary = {
+        "ts": now_iso(), "commit": git_commit(), "config_sha256": config_hash(),
+        "dry_run": args.dry_run, "method": method, "vector": vec, "runs": runs,
+        "search_s": round(search_s, 1), "wall_s": round(wall_s, 1),
+        "per_eval_s": round(wall_s / runs, 1) if runs else None,
+        "host_load1_end": host_load1(),
+        "aggregate": aggregate(rows, names),
+        "log": os.path.basename(log_path),
+    }
+    summary_path = os.path.join(RESULTS_DIR, f"compare-{stamp}-{method}.json")
+    with open(summary_path, "w", encoding="utf-8") as f:
+        json.dump(summary, f, ensure_ascii=False, indent=2)
+    log.close()
+    print(f"\n{method}: {vector_str(vec)} runs={runs} search={search_s:.1f}s "
+          f"wall={wall_s:.1f}s\nraw: {log_path}\nsummary: {summary_path}")
+    return summary
+
+
 # ---------- Vòng PSO ----------
 
 def vector_str(vec):
@@ -375,6 +517,7 @@ def run_pso(cfg, args):
     iterations = args.iterations or pso["iterations"]
     max_evals = args.max_evals or cfg["budget"]["max_evaluations"]
 
+    started = time.time()
     stamp = datetime.now().strftime("%Y%m%dT%H%M%S")
     os.makedirs(RESULTS_DIR, exist_ok=True)
     log_path = os.path.join(RESULTS_DIR, f"pso-{stamp}.jsonl")
@@ -449,10 +592,13 @@ def run_pso(cfg, args):
             print(f"  dừng: gBest không cải thiện {stall} vòng")
             break
 
+    wall_s = time.time() - started
     summary = {
         "ts": now_iso(), "commit": git_commit(), "config_sha256": config_hash(),
         "dry_run": args.dry_run, "evaluations": evals,
         "gbest": gbest, "gbest_F": gbest_f,
+        "wall_s": round(wall_s, 1), "search_s": round(wall_s, 1),
+        "per_eval_s": round(wall_s / evals, 1) if evals else None,
         "host_load1_end": host_load1(), "log": os.path.basename(log_path),
     }
     gbest_path = os.path.join(RESULTS_DIR, f"gbest-{stamp}.json")
@@ -468,10 +614,15 @@ def run_pso(cfg, args):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true", help="không gọi Docker, dùng metrics giả")
+    parser.add_argument("--method", choices=["pso", "fixed", "rule", "validate"], default="pso")
+    parser.add_argument("--runs", type=int, help="số lần lặp cho fixed/rule/validate")
     parser.add_argument("--swarm", type=int)
     parser.add_argument("--iterations", type=int)
     parser.add_argument("--max-evals", type=int)
     args = parser.parse_args()
+
+    if args.method == "validate" and args.dry_run:
+        raise SystemExit("--method validate cần gbest thật, không hỗ trợ --dry-run")
 
     cfg = load_config()
     if not args.dry_run:
@@ -483,15 +634,18 @@ def main():
         if not wait_health(cfg["load"]["base_url"], timeout=30):
             raise SystemExit("Backend rental-exp không healthy")
 
-    summary = run_pso(cfg, args)
+    summary = run_pso(cfg, args) if args.method == "pso" else run_method(cfg, args)
+
     if args.dry_run:
-        assert summary["gbest"] is not None, "PSO không tạo được gbest"
-        assert math.isfinite(summary["gbest_F"]), "gbest_F phải hữu hạn"
-        for n, (cpus, mem_mb) in summary["gbest"].items():
+        vec = summary["gbest"] if args.method == "pso" else summary["vector"]
+        assert vec is not None, "không tạo được vector"
+        if args.method == "pso":
+            assert math.isfinite(summary["gbest_F"]), "gbest_F phải hữu hạn"
+        for n, (cpus, mem_mb) in vec.items():
             assert cfg["search_space"]["cpus"]["min"] <= cpus <= cfg["search_space"]["cpus"]["max"]
             assert cfg["search_space"]["mem_mb"]["min"] <= mem_mb <= cfg["search_space"]["mem_mb"]["max"]
-        assert sum(v[0] for v in summary["gbest"].values()) <= cfg["resources"]["cpu_avail"] + 1e-9
-        assert sum(v[1] for v in summary["gbest"].values()) <= cfg["resources"]["ram_avail_mb"] + 1e-9
+        assert sum(v[0] for v in vec.values()) <= cfg["resources"]["cpu_avail"] + 1e-9
+        assert sum(v[1] for v in vec.values()) <= cfg["resources"]["ram_avail_mb"] + 1e-9
         print("dry-run OK: miền + ngân sách hợp lệ")
 
 

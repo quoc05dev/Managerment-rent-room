@@ -22,6 +22,7 @@ MemoryMax=$MEM_MAX
 Delegate=yes
 EOF
     systemctl daemon-reload
+    systemctl stop "$SLICE" 2>/dev/null || true
     systemctl start "$SLICE"
     echo "đã tạo $SLICE (CPUQuota=$CPU_QUOTA, MemoryMax=$MEM_MAX)"
     ;;

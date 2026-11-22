@@ -11,13 +11,27 @@ on:
         type: choice
         options: [probe, up, seed, smoke, status, results, slice-create, slice-status, slice-remove, down, dry, run]
       max_evals:
-        description: "Số evaluation tối đa cho mode=run (mặc định 4 để smoke)"
+        description: "Số evaluation tối đa cho method=pso (mặc định 4 để smoke)"
         required: false
         default: "4"
+      method:
+        description: "Phương án cho mode=run"
+        required: false
+        default: pso
+        type: choice
+        options: [pso, fixed, rule, validate]
+      runs:
+        description: "Số lần lặp cho fixed/rule/validate"
+        required: false
+        default: "10"
       isolate:
         description: "1 = gắn stack vào cgroup slice rental-exp.slice (chạy slice-create trước)"
         required: false
         default: "0"
+      slice_cpu:
+        description: "CPUQuota của slice, vd 500% (phải >= ngân sách 400% + activemq 50%)"
+        required: false
+        default: "500%"
 
 jobs:
   exp:
@@ -29,13 +43,16 @@ jobs:
         env:
           MODE: ${{ inputs.mode }}
           MAX_EVALS: ${{ inputs.max_evals }}
+          METHOD: ${{ inputs.method }}
+          RUNS: ${{ inputs.runs }}
           EXP_ISOLATE: ${{ inputs.isolate }}
+          EXP_SLICE_CPU_QUOTA: ${{ inputs.slice_cpu }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           command_timeout: 115m
-          envs: MODE,MAX_EVALS,EXP_ISOLATE
+          envs: MODE,MAX_EVALS,METHOD,RUNS,EXP_ISOLATE,EXP_SLICE_CPU_QUOTA
           script: |
             set -uo pipefail
             cd ~/Quoc/Managerment-rent-room
@@ -44,8 +61,10 @@ jobs:
             git reset --hard origin/main
             if [ "$MODE" = "dry" ]; then
               python3 experiments/pso/runner.py --dry-run
+            elif [ "$MODE" = "run" ] && [ "$METHOD" = "pso" ]; then
+              python3 experiments/pso/runner.py --method pso --max-evals "$MAX_EVALS"
             elif [ "$MODE" = "run" ]; then
-              python3 experiments/pso/runner.py --max-evals "$MAX_EVALS"
+              python3 experiments/pso/runner.py --method "$METHOD" --runs "$RUNS"
             else
               bash experiments/stack/stack.sh "$MODE"
             fi
