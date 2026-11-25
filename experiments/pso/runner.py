@@ -37,7 +37,10 @@ RESULTS_DIR = os.path.join(ROOT, "experiments", "results", "raw")
 
 
 def sh(cmd, **kw):
-    return subprocess.run(cmd, check=True, text=True, capture_output=True, **kw)
+    p = subprocess.run(cmd, check=False, text=True, capture_output=True, **kw)
+    if p.returncode != 0:
+        raise RuntimeError(f"{cmd} -> rc={p.returncode}\n{p.stderr.strip()}")
+    return p
 
 
 def now_iso():
@@ -370,7 +373,7 @@ def fitness(vec, metrics, cfg):
     return fit["alpha"] * l_norm + fit["beta"] * r_norm + fit["gamma"] * p_sla
 
 
-def is_feasible(metrics, cfg):
+def is_feasible(metrics, vec, cfg):
     slo = cfg["slo"]
     p95 = metrics.get("p95_ms")
     return bool(
@@ -379,6 +382,8 @@ def is_feasible(metrics, cfg):
         and metrics.get("restarts", 0) == 0
         and (metrics.get("error_rate") or 0) <= slo["max_error_rate"]
         and metrics.get("healthy", False)
+        and sum(v[0] for v in vec.values()) <= cfg["resources"]["cpu_avail"] + 1e-9
+        and sum(v[1] for v in vec.values()) <= cfg["resources"]["ram_avail_mb"] + 1e-9
     )
 
 
@@ -466,7 +471,7 @@ def run_method(cfg, args):
         search_s = time.time() - cal_started
         vec = rule_vector(cfg, cal_metrics)
         record(-1, -1, cal_vec, cal_metrics,
-               fitness(cal_vec, cal_metrics, cfg), is_feasible(cal_metrics, cfg), "calibration")
+               fitness(cal_vec, cal_metrics, cfg), is_feasible(cal_metrics, cal_vec, cfg), "calibration")
         runs = args.runs or cfg["methods"]["rule"]["runs"]
         print(f"  rule từ calibration: {vector_str(vec)} (cal={search_s:.1f}s)")
     elif method == "validate":
@@ -480,7 +485,7 @@ def run_method(cfg, args):
     for i in range(runs):
         metrics = evaluate(vec, cfg, args.dry_run)
         f = fitness(vec, metrics, cfg)
-        rows.append(record(0, i, vec, metrics, f, is_feasible(metrics, cfg)))
+        rows.append(record(0, i, vec, metrics, f, is_feasible(metrics, vec, cfg)))
         print(f"  {method} run {i + 1}/{runs}: F={f:.4f} "
               f"p95={metrics.get('p95_ms')} oom={metrics.get('oom')}")
     wall_s = time.time() - started
@@ -551,9 +556,10 @@ def run_pso(cfg, args):
         f = fitness(particles[i], metrics, cfg)
         evals += 1
         pbest[i], pbest_f[i] = copy.deepcopy(particles[i]), f
-        if f < gbest_f:
+        feas = is_feasible(metrics, particles[i], cfg)
+        if feas and f < gbest_f:
             gbest, gbest_f = copy.deepcopy(particles[i]), f
-        record(0, i, particles[i], metrics, f, is_feasible(metrics, cfg))
+        record(0, i, particles[i], metrics, f, feas)
         print(f"  init p{i}: {vector_str(particles[i])} F={f:.4f} "
               f"p95={metrics.get('p95_ms')} oom={metrics.get('oom')}")
 
@@ -569,9 +575,10 @@ def run_pso(cfg, args):
             for n in names:
                 for d in (0, 1):
                     r1, r2 = random.random(), random.random()
+                    gb = gbest[n][d] if gbest is not None else particles[i][n][d]
                     v = (pso["w"] * velocities[i][n][d]
                          + pso["c1"] * r1 * (pbest[i][n][d] - particles[i][n][d])
-                         + pso["c2"] * r2 * (gbest[n][d] - particles[i][n][d]))
+                         + pso["c2"] * r2 * (gb - particles[i][n][d]))
                     lo, hi = (cpu["min"], cpu["max"]) if d == 0 else (mem["min"], mem["max"])
                     vmax = pso["vmax_ratio"] * (hi - lo)
                     velocities[i][n][d] = clamp(v, -vmax, vmax)
@@ -581,12 +588,13 @@ def run_pso(cfg, args):
             metrics = evaluate(particles[i], cfg, args.dry_run)
             f = fitness(particles[i], metrics, cfg)
             evals += 1
+            feas = is_feasible(metrics, particles[i], cfg)
             if f < pbest_f[i]:
                 pbest[i], pbest_f[i] = copy.deepcopy(particles[i]), f
-            if f < gbest_f:
+            if feas and f < gbest_f:
                 gbest, gbest_f = copy.deepcopy(particles[i]), f
                 improved = True
-            record(t, i, particles[i], metrics, f, is_feasible(metrics, cfg))
+            record(t, i, particles[i], metrics, f, feas)
             print(f"  it{t} p{i}: {vector_str(particles[i])} F={f:.4f} "
                   f"p95={metrics.get('p95_ms')} oom={metrics.get('oom')} best={gbest_f:.4f}")
         stall = 0 if improved else stall + 1
@@ -608,7 +616,11 @@ def run_pso(cfg, args):
         json.dump(summary, f, ensure_ascii=False, indent=2)
     log.close()
 
-    print(f"\nGBest: {vector_str(gbest)} F={gbest_f:.4f} evals={evals}")
+    if gbest is None:
+        print(f"\nCẢNH BÁO: không có nghiệm khả thi nào trong {evals} eval "
+              f"(SLA/ngân sách). Kiểm tra log.")
+    else:
+        print(f"\nGBest: {vector_str(gbest)} F={gbest_f:.4f} evals={evals}")
     print(f"raw: {log_path}\ngbest: {gbest_path}")
     return summary
 
