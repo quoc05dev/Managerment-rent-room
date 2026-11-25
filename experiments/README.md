@@ -34,6 +34,10 @@ gh workflow run experiments.yml -f mode=run -f max_evals=80  # full
 gh workflow run experiments.yml -f mode=results
 ```
 
+> Lưu ý thời gian: mỗi evaluation ≈ 3,3 phút nên `max_evals=80` ≈ 4,5 giờ vượt
+> giới hạn 120 phút của workflow và sẽ bị dừng giữa chừng. Chạy 80 eval trực
+> tiếp trên VPS (tmux/nohup) hoặc tăng `timeout-minutes`/`command_timeout`.
+
 Chi tiết cô lập và bằng chứng: `docs/research/03-isolation.md`.
 
 ## P0 — chạy trên VPS
