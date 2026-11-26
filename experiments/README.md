@@ -22,21 +22,44 @@ experiments/
   results/raw/             # JSONL/JSON thô, bị gitignore
 ```
 
-## P3 — stack clone & PSO
+## P3 — quy trình thử nghiệm (theo thứ tự)
+
+Mỗi dòng là một lần `workflow_dispatch` trên GitHub Actions (hoặc gọi
+`stack.sh`/`runner.py` tương ứng khi chạy trực tiếp trên VPS). PSO phải chạy
+**trước** `validate` vì `validate` đọc file `gbest-*.json` mới nhất.
 
 ```bash
+# 0) kiểm tra môi trường, tạo slice cgroup
+gh workflow run experiments.yml -f mode=probe
 gh workflow run experiments.yml -f mode=slice-create
+# 1) dựng stack clone trong slice (không đụng production)
 gh workflow run experiments.yml -f mode=up -f isolate=1
+# 2) nạp dữ liệu + smoke harness
 gh workflow run experiments.yml -f mode=seed
 gh workflow run experiments.yml -f mode=smoke
-gh workflow run experiments.yml -f mode=run -f max_evals=4   # smoke
-gh workflow run experiments.yml -f mode=run -f max_evals=80  # full
+# 3) kiểm tra cấu hình PSO (không gọi Docker)
+gh workflow run experiments.yml -f mode=dry
+# 4) tối ưu PSO — 24 eval ≈ 80 phút
+gh workflow run experiments.yml -f mode=run -f method=pso -f max_evals=24
+# 5) đối chứng, mỗi phương án n=10
+gh workflow run experiments.yml -f mode=run -f method=fixed -f runs=10
+gh workflow run experiments.yml -f mode=run -f method=rule  -f runs=10
+# 6) validate dùng gbest của PSO ở bước 4
+gh workflow run experiments.yml -f mode=run -f method=validate -f runs=10
+# 7) xuất kết quả (summary + JSONL thô) rồi dọn stack
 gh workflow run experiments.yml -f mode=results
+gh workflow run experiments.yml -f mode=raw
+gh workflow run experiments.yml -f mode=down
 ```
 
-> Lưu ý thời gian: mỗi evaluation ≈ 3,3 phút nên `max_evals=80` ≈ 4,5 giờ vượt
-> giới hạn 120 phút của workflow và sẽ bị dừng giữa chừng. Chạy 80 eval trực
-> tiếp trên VPS (tmux/nohup) hoặc tăng `timeout-minutes`/`command_timeout`.
+- `mode=dry` chỉ dùng cho PSO (`--dry-run` bị chặn với `validate`).
+- `isolate=1` chỉ có tác dụng ở bước `up`; slice mặc định `CPUQuota=500%`.
+- Mỗi evaluation ≈ 3,3 phút nên `max_evals=80` ≈ 4,5 giờ, **vượt**
+  `timeout-minutes: 120` / `command_timeout: 115m` → chạy trực tiếp trên VPS
+  (tmux/nohup) hoặc tăng timeout (GitHub tối đa 6 giờ).
+- `results` in summary JSON; `raw` in JSONL từng run; dữ liệu gốc ở
+  `results/raw/` (gitignore), tổng hợp bằng `docs/research/analyze_results.py`.
+- Sau reboot phải làm lại `slice-create` + `up`.
 
 Chi tiết cô lập và bằng chứng: `docs/research/03-isolation.md`.
 
