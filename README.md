@@ -5,15 +5,15 @@ cho Docker container bằng Particle Swarm Optimization (PSO).
 
 ## Thành phần
 
-| Thành phần | Công nghệ | Cổng (localhost) |
-|---|---|---|
-| Backend | Java 11, Spring Boot 2.7, Spring Security, JPA, ActiveMQ, WebSocket | `8083` → `8080` |
-| Frontend | React 18 (CRA), MUI, Ant Design, Chart.js | `3100` → `80` |
-| Database | MySQL 8.0 | `3316` → `3306` |
-| Message broker | ActiveMQ 5.15 | `61617`, `8162` |
-| Giám sát | Prometheus + Grafana + node-exporter | `9090`, `3004` |
+| Thành phần | Công nghệ |
+|---|---|
+| Backend | Java 11, Spring Boot 2.7, Spring Security, JPA, ActiveMQ, WebSocket |
+| Frontend | React 18 (CRA), MUI, Ant Design, Chart.js |
+| Database | MySQL 8.0 |
+| Message broker | ActiveMQ 5.15 |
+| Giám sát | Prometheus + Grafana + node-exporter |
 
-Tất cả cổng chỉ bind `127.0.0.1` — dùng SSH tunnel khi cần truy cập từ xa.
+Các dịch vụ nội bộ chỉ bind `127.0.0.1`; truy cập từ xa qua SSH tunnel hoặc Nginx.
 
 ## Cấu trúc
 
@@ -36,9 +36,8 @@ docker compose up -d --build
 docker compose ps
 ```
 
-- Frontend: <http://localhost:3100>
-- Backend health: <http://localhost:8083/health>
-- Grafana: <http://localhost:3004> (đăng nhập bằng `GRAFANA_ADMIN_PASSWORD` trong `.env`)
+- Truy cập frontend/backend/Grafana qua Nginx (xem `deploy/`) hoặc SSH tunnel.
+- Tài khoản Grafana lấy từ `GRAFANA_ADMIN_PASSWORD` trong `.env`.
 
 ## Thực nghiệm PSO
 
